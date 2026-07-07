@@ -1,0 +1,22 @@
+{
+  "name": "ziwei-3d",
+  "version": "1.0.0",
+  "description": "紫微斗數 3D 命盤 — natal/decadal/yearly/monthly/daily layers stacked in 3D",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "node test/astro-service.test.mjs && node test/fly-engine.test.mjs && node test/timeline.test.mjs && node test/renderer.test.mjs && node test/arrows.test.mjs"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "iztro": "^2.5.8"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "vite": "^8.1.3"
+  }
+}
