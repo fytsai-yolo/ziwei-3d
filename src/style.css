@@ -197,6 +197,46 @@ form button[type="submit"] {
     border-top: 1px dashed rgba(255, 255, 255, 0.12);
 }
 
+#year-panel {
+    margin-top: 12px;
+    font-size: 12px;
+    line-height: 1.6;
+}
+#year-panel:empty { display: none; }
+.year-title {
+    color: var(--color-gold);
+    font-weight: bold;
+    font-size: 13px;
+}
+.year-decadal {
+    color: var(--color-text-dim);
+    font-size: 11px;
+}
+.year-flags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 4px;
+}
+.yflag {
+    padding: 1px 6px;
+    border-radius: 8px;
+    font-size: 10px;
+    line-height: 1.6;
+}
+.yflag-bad2 { background: rgba(208, 53, 85, 0.85); color: #fff; }
+.yflag-bad1 { background: rgba(208, 53, 85, 0.35); color: #ffd7de; }
+.yflag-good1 { background: rgba(63, 191, 111, 0.75); color: #fff; }
+.yflag-love { background: rgba(255, 127, 177, 0.75); color: #fff; }
+.yflag-note { background: rgba(255, 255, 255, 0.18); color: var(--color-text-light); }
+.year-note {
+    margin-top: 6px;
+    padding: 6px 8px;
+    border-left: 2px solid var(--color-gold-border);
+    background: rgba(212, 175, 55, 0.07);
+    color: var(--color-text-light);
+}
+
 #info-panel {
     margin-top: 12px;
     font-size: 12px;

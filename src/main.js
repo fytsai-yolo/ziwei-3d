@@ -2,8 +2,10 @@ import { buildChartData, defaultTargetDate, LAYER_DEFS, MUT_CLASS, MUTAGEN_KEYS 
 import { renderLayer } from './renderer.js';
 import { Scene } from './scene.js';
 import { createFlyOverlay } from './arrows.js';
-import { buildTimeline } from './timeline.js';
+import { buildTimeline, yearSummary } from './timeline.js';
 import { renderTimeline } from './timeline-ui.js';
+import { getNotesForChart } from './notes-data.js';
+import { buildReportHTML } from './report.js';
 
 let scene;
 let chartData = null; // Stores the latest chart data
@@ -11,6 +13,7 @@ let overlays = new Map(); // layerId -> fly overlay controller
 let flyMode = 'select'; // 'none' | 'select' | 'heat'
 let timelineCtl = null; // {setSelected} from renderTimeline
 let timelineKey = null; // birth inputs the current timeline was built for
+let currentTimeline = null; // buildTimeline() result for the current chart
 const infoPanel = document.getElementById('info-panel');
 const metaPanel = document.getElementById('meta');
 
@@ -148,8 +151,8 @@ function refreshTimeline() {
     const key = `${chartData.meta.solarDate}|${chartData.meta.time}|${chartData.meta.gender}`;
     if (key !== timelineKey) {
         timelineKey = key;
-        const tl = buildTimeline(chartData);
-        timelineCtl = renderTimeline(document.getElementById('timeline'), tl, {
+        currentTimeline = buildTimeline(chartData);
+        timelineCtl = renderTimeline(document.getElementById('timeline'), currentTimeline, {
             onSelect: (year) => {
                 // Jump the horoscope target to mid-year (safely inside that lunar year)
                 document.getElementById('target-date').value = `${year}-07-02T12:00`;
@@ -159,6 +162,34 @@ function refreshTimeline() {
     }
     const targetYear = parseInt(document.getElementById('target-date').value.slice(0, 4), 10);
     if (timelineCtl && !Number.isNaN(targetYear)) timelineCtl.setSelected(targetYear);
+    updateYearPanel(Number.isNaN(targetYear) ? null : targetYear);
+}
+
+/** Shows the selected year's flags and (when this is the curated chart) the hand-written note. */
+function updateYearPanel(year) {
+    const panel = document.getElementById('year-panel');
+    panel.replaceChildren();
+    if (!chartData || !currentTimeline || year === null) return;
+    const entry = currentTimeline.years.find(e => e.year === year);
+    if (!entry) return;
+
+    panel.appendChild(_createElement('div', 'year-title', yearSummary(entry).split('｜')[0]));
+    const decadalText = entry.decadal
+        ? `大限 ${entry.decadal.range[0]}-${entry.decadal.range[1]} ${entry.decadal.palaceName}`
+        : '童限';
+    panel.appendChild(_createElement('div', 'year-decadal', decadalText));
+    if (entry.flags.length > 0) {
+        const flagsRow = _createElement('div', 'year-flags');
+        entry.flags.forEach(f => {
+            flagsRow.appendChild(_createElement('span', ['yflag', `yflag-${f.severity}`], f.label));
+        });
+        panel.appendChild(flagsRow);
+    }
+    const notes = getNotesForChart(chartData.meta);
+    const note = notes && notes.years[year];
+    if (note) {
+        panel.appendChild(_createElement('div', 'year-note', note));
+    }
 }
 
 /** Re-applies the current fly-mode visuals (after rebuild or mode switch). */
@@ -390,5 +421,18 @@ document.addEventListener('DOMContentLoaded', () => {
             flyMode = e.target.value;
             applyFlyMode();
         }
+    });
+
+    // Export a print-friendly report in a new tab
+    document.getElementById('export-report').addEventListener('click', () => {
+        if (!chartData || !currentTimeline) return;
+        const html = buildReportHTML({
+            chart: chartData,
+            timeline: currentTimeline,
+            notes: getNotesForChart(chartData.meta),
+        });
+        const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 60000);
     });
 });
