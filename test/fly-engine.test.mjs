@@ -99,14 +99,53 @@ ok('來因宮 = 乙酉(遷移), and meta carries it', () => {
   assert.equal(natal.laiyinIndex, you);
 });
 
-ok('格局: hits 陽梁昌祿/祿馬交馳/日照雷門; strict 機月同梁 correctly absent', () => {
+ok('格局: hits 陽梁昌祿/祿馬交馳/日照雷門/日月並明; strict 機月同梁 correctly absent', () => {
   const ids = chart.patterns.map((p) => p.id).sort();
-  assert.deepEqual(ids, ['lu-ma-jiao-chi', 'ri-zhao-lei-men', 'yang-liang-chang-lu'].sort());
+  assert.deepEqual(ids, ['lu-ma-jiao-chi', 'ri-zhao-lei-men', 'ri-yue-bing-ming', 'yang-liang-chang-lu'].sort());
   const ylcl = chart.patterns.find((p) => p.id === 'yang-liang-chang-lu');
   // 卯 holds 陽梁昌祿 physically; empty 酉 also qualifies via 借宮 borrowing of 卯's majors.
   assert.deepEqual(ylcl.palaces, [byBranch('卯').branchIndex, byBranch('酉').branchIndex].sort());
   const lmjc = chart.patterns.find((p) => p.id === 'lu-ma-jiao-chi');
   assert.deepEqual(lmjc.palaces, [byBranch('巳').branchIndex]); // 天機生年祿+天馬同宮於身宮
+  // 日月並明: 太陽廟在卯（命宮）、太陰廟在亥（三合），both in the Life Palace's 三方四正.
+  const rybm = chart.patterns.find((p) => p.id === 'ri-yue-bing-ming');
+  assert.deepEqual(rybm.palaces, [byBranch('卯').branchIndex, byBranch('亥').branchIndex].sort((a, b) => a - b));
+});
+
+ok('new 格局 detections on synthetic charts (馬頭帶箭/火鈴夾命/明祿暗祿)', () => {
+  const clone = () => fePalaces.map((p) => ({
+    ...p,
+    majorStarNames: [...p.majorStarNames],
+    otherStarNames: [...p.otherStarNames],
+    majorStarBrightness: { ...p.majorStarBrightness },
+  }));
+  const idx = (branch) => fePalaces.findIndex((p) => p.branch === branch);
+
+  // 馬頭帶箭: plant 擎羊 in 午 and set life there
+  const s1 = clone();
+  s1[idx('午')].otherStarNames.push('擎羊');
+  assert.ok(detectPatterns({ palaces: s1, lifeIndex: idx('午'), bodyIndex: 0, yearStem: '乙' })
+    .some((p) => p.id === 'ma-tou-dai-jian'));
+
+  // 火鈴夾命: life at 卯 with 火星 in 寅 and 鈴星 in 辰
+  const s2 = clone();
+  s2[idx('寅')].otherStarNames.push('火星');
+  s2[idx('辰')].otherStarNames.push('鈴星');
+  assert.ok(detectPatterns({ palaces: s2, lifeIndex: idx('卯'), bodyIndex: 0, yearStem: '乙' })
+    .some((p) => p.id === 'huo-ling-jia-ming'));
+
+  // 明祿暗祿: reference life 卯 has 祿存; plant 生年祿星(天機, 乙) in 六合宮 戌
+  const s3 = clone();
+  s3[idx('巳')].majorStarNames = s3[idx('巳')].majorStarNames.filter((n) => n !== '天機');
+  s3[idx('戌')].majorStarNames.push('天機');
+  assert.ok(detectPatterns({ palaces: s3, lifeIndex: idx('卯'), bodyIndex: 0, yearStem: '乙' })
+    .some((p) => p.id === 'ming-lu-an-lu'));
+
+  // Guard: none of these fire on the untouched reference chart
+  const base = detectPatterns({ palaces: fePalaces, lifeIndex: idx('卯'), bodyIndex: 3, yearStem: '乙' });
+  for (const id of ['ma-tou-dai-jian', 'huo-ling-jia-ming', 'ming-lu-an-lu', 'ri-yue-fan-bei', 'san-qi-jia-hui']) {
+    assert.ok(!base.some((p) => p.id === id), `${id} unexpectedly fired`);
+  }
 });
 
 ok('pure functions do not mutate input', () => {

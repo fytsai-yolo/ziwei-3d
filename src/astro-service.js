@@ -73,6 +73,7 @@ export function buildChartData({ solarDate, timeIndex, gender, targetDate }) {
     isBodyPalace: p.isBodyPalace,
     majorStarNames: p.majorStars.map((s) => s.name),
     otherStarNames: p.minorStars.map((s) => s.name),
+    majorStarBrightness: Object.fromEntries(p.majorStars.map((s) => [s.name, s.brightness])),
   }));
   const selfMutagen = computeSelfMutagen(fePalaces);
   const flyingMap = computeFlyingMap(fePalaces);

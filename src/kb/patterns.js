@@ -1,5 +1,61 @@
 export const PATTERNS = [
   {
+    id: 'pattern-ma-tou-dai-jian',
+    match: { patternId: 'ma-tou-dai-jian' },
+    text: '馬頭帶箭格。擎羊坐命於午宮，火煉刀鋒，膽識與行動力極強，宜武職、外勤、競技或開疆闢土之業。此格先勞後成，早年多波折磨練，中年後方見大器，最忌安逸久居一地。',
+    source: '現代通行',
+    weight: 3
+  },
+  {
+    id: 'pattern-ri-yue-bing-ming',
+    match: { patternId: 'ri-yue-bing-ming' },
+    text: '日月並明格。太陽、太陰俱居廟旺之地會照命垣，表裡俱佳：對外有聲望與舞台，對內有積蓄與細膩。一生貴人與資源兩全，唯日月皆動之星，人生節奏偏忙碌，宜學會取捨。',
+    source: '現代通行',
+    weight: 3
+  },
+  {
+    id: 'pattern-ri-yue-fan-bei',
+    match: { patternId: 'ri-yue-fan-bei' },
+    text: '日月反背格。太陽、太陰俱落陷失輝，早年家蔭較薄，凡事多靠自身努力，白手起家。此格反主離鄉發展有利，遠離出生地反能開創格局；心態上勿怨天尤人，勤勉即是轉機。',
+    source: '現代通行',
+    weight: 3
+  },
+  {
+    id: 'pattern-jun-chen-qing-hui',
+    match: { patternId: 'jun-chen-qing-hui' },
+    text: '君臣慶會格。紫微守命而左輔右弼會照，如帝座得賢臣，天生領導格局，善於統御調度，得部屬與貴人之力。宜居管理者、召集人之位；唯須防用人唯親，格局方能長久。',
+    source: '現代通行',
+    weight: 3
+  },
+  {
+    id: 'pattern-fu-xiang-chao-yuan',
+    match: { patternId: 'fu-xiang-chao-yuan' },
+    text: '府相朝垣格。天府、天相二衣祿之神朝拱命垣，一生食祿不虧，職場有靠山，做事穩健得體。此格利於在建制內穩步高升，不利孤注一擲式的豪賭創業。',
+    source: '現代通行',
+    weight: 3
+  },
+  {
+    id: 'pattern-san-qi-jia-hui',
+    match: { patternId: 'san-qi-jia-hui' },
+    text: '三奇加會格。生年化祿、化權、化科齊會命宮三方四正，才具、機遇、名聲三者兼備，為大格局之命。得志時能成大事，唯忌恃才傲物；三奇怕逢忌沖，行運逢忌之年宜收斂鋒芒。',
+    source: '現代通行',
+    weight: 3
+  },
+  {
+    id: 'pattern-ming-lu-an-lu',
+    match: { patternId: 'ming-lu-an-lu' },
+    text: '明祿暗祿格。命宮見祿而六合宮又藏祿，明處有財源、暗處有奧援，一生多隱性助力與意外之財，錦上添花之象。宜多經營檯面下的人情與人脈，其回報常在不經意處。',
+    source: '現代通行',
+    weight: 3
+  },
+  {
+    id: 'pattern-huo-ling-jia-ming',
+    match: { patternId: 'huo-ling-jia-ming' },
+    text: '火鈴夾命。火星、鈴星左右夾制命垣，心緒易急躁不安，做事有爆發力但難持久。宜以專業技術、運動或高強度工作疏導其銳氣，化躁為衝勁；忌壓抑積鬱，防突發衝突。',
+    source: '現代通行',
+    weight: 3
+  },
+  {
     id: 'pattern-yang-liang-chang-lu',
     match: { patternId: 'yang-liang-chang-lu' },
     text: '陽梁昌祿格。太陽、天梁、文昌、祿存或化祿交會，主智慧超群、文采斐然。此格局利於學術研究、公職科考與專業技術發展。唯需注意名聲高企時易招嫉妒，行事應保持謙遜，避免流於高傲。',

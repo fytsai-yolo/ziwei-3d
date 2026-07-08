@@ -106,8 +106,8 @@ export function validateEntries(entries) {
       errors.push(`${path}: "patternId" and "star" are mutually exclusive.`);
     }
 
-    if (!m.patternId && !m.star) {
-      errors.push(`${path}: either "star" or "patternId" must be present (anchored rule).`);
+    if (!m.patternId && !m.star && !(m.mutagen && m.palaceName)) {
+      errors.push(`${path}: needs an anchor — "star", "patternId", or "mutagen"+"palaceName".`);
     }
   });
 
@@ -183,10 +183,19 @@ export function matchPalaceKnowledge(chart, entries) {
 
       if (!isMatch) continue;
 
-      // 5. Mutagen constraint
+      // 5. Mutagen constraint. With a star anchor it must be THAT star's birth mutagen;
+      // star-less entries (生年四化入宮 rules) match if ANY star here carries it.
       if (entry.match.mutagen) {
-        if (!matchedStar || matchedStar.mutagen !== entry.match.mutagen) {
-          isMatch = false;
+        if (entry.match.star) {
+          if (!matchedStar || matchedStar.mutagen !== entry.match.mutagen) {
+            isMatch = false;
+          }
+        } else {
+          const anyHas = [...(cell.majorStars || []), ...(cell.minorStars || [])]
+            .some(s => s.mutagen === entry.match.mutagen);
+          if (!anyHas) {
+            isMatch = false;
+          }
         }
       }
 

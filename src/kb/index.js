@@ -7,7 +7,9 @@ import { STAR_PALACE_B } from './star-palace-b.js';
 import { STAR_PALACE_C } from './star-palace-c.js';
 import { STAR_PALACE_D } from './star-palace-d.js';
 import { SIHUA } from './sihua.js';
+import { SIHUA_PALACE } from './sihua-palace.js';
 import { PATTERNS } from './patterns.js';
+import { CLASSICS } from './classics.js';
 import { AUX_PALACE_A } from './aux-palace-a.js';
 import { AUX_PALACE_B } from './aux-palace-b.js';
 import { SHA_PALACE } from './sha-palace.js';
@@ -29,5 +31,7 @@ export const KB_ENTRIES = [
   ...DUO_STARS,
   ...BRIGHTNESS,
   ...SIHUA,
+  ...SIHUA_PALACE,
   ...PATTERNS,
+  ...CLASSICS,
 ];

@@ -438,5 +438,121 @@ export function detectPatterns({ palaces, lifeIndex, bodyIndex, yearStem }) {
     });
   }
 
+  // k) id 'ma-tou-dai-jian', name '馬頭帶箭格': 擎羊坐命於午宮.
+  if (palaces[lifeIndex].branch === '午' && allStars(palaces[lifeIndex]).includes('擎羊')) {
+    patterns.push({
+      id: 'ma-tou-dai-jian',
+      name: '馬頭帶箭格',
+      palaces: [lifeIndex],
+      note: '威震邊疆，利武職與外地開創，先勞後成',
+    });
+  }
+
+  // l/m) 日月並明 / 日月反背: brightness of 太陽/太陰 across the chart.
+  //    並明: both 廟/旺 AND both within the Life Palace's 三方四正.
+  //    反背: both 陷/不 (chart-wide condition, no 三方 requirement).
+  const sunIdx = findStarPalaceIndex('太陽');
+  const moonIdx = findStarPalaceIndex('太陰');
+  if (sunIdx !== null && moonIdx !== null) {
+    const sunBright = (palaces[sunIdx].majorStarBrightness || {})['太陽'];
+    const moonBright = (palaces[moonIdx].majorStarBrightness || {})['太陰'];
+    const strong = (b) => b === '廟' || b === '旺';
+    const weak = (b) => b === '陷' || b === '不';
+    if (strong(sunBright) && strong(moonBright) && LIFE3.includes(sunIdx) && LIFE3.includes(moonIdx)) {
+      patterns.push({
+        id: 'ri-yue-bing-ming',
+        name: '日月並明格',
+        palaces: getUniqueSortedIndices([sunIdx, moonIdx]),
+        note: '日月皆旺照命，表裡俱佳，貴人與聲望兩全',
+      });
+    }
+    if (weak(sunBright) && weak(moonBright)) {
+      patterns.push({
+        id: 'ri-yue-fan-bei',
+        name: '日月反背格',
+        palaces: getUniqueSortedIndices([sunIdx, moonIdx]),
+        note: '日月俱陷，早年多辛勞，宜離鄉背井自立更生',
+      });
+    }
+  }
+
+  // n) id 'jun-chen-qing-hui', name '君臣慶會格':
+  //    紫微守命，左輔右弼皆於命宮三方四正會照.
+  if (palaces[lifeIndex].majorStarNames.includes('紫微')
+      && ['左輔', '右弼'].every(s => LIFE3.some(i => allStars(palaces[i]).includes(s)))) {
+    patterns.push({
+      id: 'jun-chen-qing-hui',
+      name: '君臣慶會格',
+      palaces: getUniqueSortedIndices(LIFE3.filter(i =>
+        palaces[i].majorStarNames.includes('紫微')
+        || allStars(palaces[i]).includes('左輔') || allStars(palaces[i]).includes('右弼'))),
+      note: '帝座得輔弼相隨，領導格局，得眾人之助',
+    });
+  }
+
+  // o) id 'fu-xiang-chao-yuan', name '府相朝垣格':
+  //    天府、天相皆於命宮三方四正（不借宮）.
+  const fuIdx = findStarPalaceIndex('天府');
+  const xiangIdx = findStarPalaceIndex('天相');
+  if (fuIdx !== null && xiangIdx !== null && LIFE3.includes(fuIdx) && LIFE3.includes(xiangIdx)
+      && palaces[fuIdx].majorStarNames.includes('天府') && palaces[xiangIdx].majorStarNames.includes('天相')) {
+    patterns.push({
+      id: 'fu-xiang-chao-yuan',
+      name: '府相朝垣格',
+      palaces: getUniqueSortedIndices([fuIdx, xiangIdx]),
+      note: '衣祿之神朝命，一生食祿無虧，職場有靠',
+    });
+  }
+
+  // p) id 'san-qi-jia-hui', name '三奇加會格':
+  //    生年化祿、化權、化科三吉化皆在命宮三方四正.
+  const sanQiIndices = ['祿', '權', '科']
+    .map(k => findStarPalaceIndex(STEM_MUTAGEN[yearStem][k]));
+  if (sanQiIndices.every(i => i !== null && LIFE3.includes(i))) {
+    patterns.push({
+      id: 'san-qi-jia-hui',
+      name: '三奇加會格',
+      palaces: getUniqueSortedIndices(sanQiIndices),
+      note: '祿權科三奇會命，才具、機遇與名聲齊備',
+    });
+  }
+
+  // q) id 'ming-lu-an-lu', name '明祿暗祿格':
+  //    命宮見祿存（或生年化祿），其六合宮見生年化祿（或祿存）.
+  const LIU_HE = {
+    '子': '丑', '丑': '子', '寅': '亥', '亥': '寅', '卯': '戌', '戌': '卯',
+    '辰': '酉', '酉': '辰', '巳': '申', '申': '巳', '午': '未', '未': '午',
+  };
+  const anIndex = palaces.findIndex(p => p.branch === LIU_HE[palaces[lifeIndex].branch]);
+  if (anIndex !== -1) {
+    const lifeStars = allStars(palaces[lifeIndex]);
+    const anStars = allStars(palaces[anIndex]);
+    if ((lifeStars.includes('祿存') && anStars.includes(birthLu))
+        || (lifeStars.includes(birthLu) && anStars.includes('祿存'))) {
+      patterns.push({
+        id: 'ming-lu-an-lu',
+        name: '明祿暗祿格',
+        palaces: getUniqueSortedIndices([lifeIndex, anIndex]),
+        note: '明祿坐命暗祿相合，錦上添花，多隱性助力',
+      });
+    }
+  }
+
+  // r) id 'huo-ling-jia-ming', name '火鈴夾命':
+  //    火星、鈴星分居命宮左右兩鄰宮.
+  const prevIdx = (lifeIndex + 11) % 12;
+  const nextIdx = (lifeIndex + 1) % 12;
+  const prevStars = allStars(palaces[prevIdx]);
+  const nextStars = allStars(palaces[nextIdx]);
+  if ((prevStars.includes('火星') && nextStars.includes('鈴星'))
+      || (prevStars.includes('鈴星') && nextStars.includes('火星'))) {
+    patterns.push({
+      id: 'huo-ling-jia-ming',
+      name: '火鈴夾命',
+      palaces: getUniqueSortedIndices([prevIdx, lifeIndex, nextIdx]),
+      note: '二火夾身，心緒易躁，宜以專業技能疏導其銳氣',
+    });
+  }
+
   return patterns;
 }

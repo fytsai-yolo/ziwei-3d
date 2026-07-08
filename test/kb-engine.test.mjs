@@ -14,8 +14,9 @@ function ok(name, fn) { fn(); passed++; console.log('[PASS]', name); }
 ok('ALL content entries pass schema validation', () => {
   const errors = validateEntries(KB_ENTRIES);
   assert.deepEqual(errors, [], `validation errors:\n${errors.join('\n')}`);
-  assert.equal(KB_ENTRIES.length, 438);
-  // 168 star-palace + 168 aux/sha/kongjie-palace + 24 雙星 + 28 亮度 + 39 sihua + 11 patterns
+  assert.equal(KB_ENTRIES.length, 506);
+  // 168 star-palace + 168 aux/sha/kongjie + 24 雙星 + 28 亮度 + 39 sihua + 48 四化入宮
+  // + 19 patterns + 12 古籍
 });
 
 ok('validateEntries catches bad entries', () => {
@@ -98,9 +99,22 @@ ok('matcher: every palace with a major star gets at least one entry; empty palac
 
 ok('pattern knowledge matches detected 格局', () => {
   const hits = matchPatternKnowledge(chart, KB_ENTRIES);
-  const ids = hits.map(h => h.entry.match.patternId).sort();
-  assert.deepEqual(ids, ['lu-ma-jiao-chi', 'ri-zhao-lei-men', 'yang-liang-chang-lu'].sort());
+  const ids = [...new Set(hits.map(h => h.entry.match.patternId))].sort();
+  assert.deepEqual(ids, ['lu-ma-jiao-chi', 'ri-zhao-lei-men', 'ri-yue-bing-ming', 'yang-liang-chang-lu'].sort());
   assert.ok(hits[0].pattern.name); // carries the chart pattern object
+  // Each detected pattern now carries both a 現代通行 text and a 古籍 quote (with ref)
+  const guHits = hits.filter(h => h.entry.source === '古籍');
+  assert.ok(guHits.length >= 3, `expected 古籍 quotes, got ${guHits.length}`);
+  guHits.forEach(h => assert.ok(h.entry.ref, `${h.entry.id} missing ref`));
+});
+
+ok('生年四化入宮 entries match by mutagen+palaceName without a star anchor', () => {
+  // 財帛(亥) holds 太陰[忌] → birth-ji-caibo; 福德(巳) holds 天機[祿] → birth-lu-fude
+  assert.ok(perPalace[9].some(e => e.id === 'birth-ji-caibo'));
+  assert.ok(perPalace[3].some(e => e.id === 'birth-lu-fude'));
+  // No false positives: 命宮(卯) has 天梁[權] but no 忌 → birth-ji-minggong absent
+  assert.ok(!perPalace[1].some(e => e.id === 'birth-ji-minggong'));
+  assert.ok(perPalace[1].some(e => e.id === 'birth-quan-minggong'));
 });
 
 ok('generality: a different chart gets its own matches (KB is chart-agnostic)', () => {
