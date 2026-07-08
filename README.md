@@ -1,6 +1,6 @@
 # 紫微斗數 3D 命盤 (ziwei-3d)
 
-A 3D Zi Wei Dou Shu (紫微斗數) chart explorer. Five chart layers — 本命 / 大限 / 流年 / 流月 / 流日 — are stacked as translucent floors of a cube (pure CSS 3D), aligned by earthly-branch position, with multi-school analysis tooling on top.
+A 3D Zi Wei Dou Shu (紫微斗數) chart explorer. Three chart layers — 本命 / 大限 / 流年 — are stacked as translucent floors of a cube (pure CSS 3D), aligned by earthly-branch position, with multi-school analysis tooling on top.
 
 ## Features
 

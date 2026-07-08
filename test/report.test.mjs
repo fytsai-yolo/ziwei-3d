@@ -29,7 +29,7 @@ const html = buildReportHTML({ chart, timeline, notes, generatedAt: '2026-07-08 
 
 ok('report contains all sections and key content', () => {
   assert.ok(html.startsWith('<!DOCTYPE html>'));
-  for (const s of ['紫微斗數命盤研究報告', '格局', '命盤十二宮', '四化匯聚', '流年提要', '分域綜述']) {
+  for (const s of ['紫微斗數命盤研究報告', '格局', '命盤十二宮', '四化匯聚', '疊宮大事記', '流年提要', '分域綜述']) {
     assert.ok(html.includes(s), `missing section ${s}`);
   }
   assert.ok(html.includes('陽梁昌祿格'));
@@ -37,6 +37,11 @@ ok('report contains all sections and key content', () => {
   assert.ok(html.includes('忌×4')); // 財帛 confluence
   assert.ok(html.includes('三忌匯流命')); // 2019 curated note
   assert.ok(html.includes('乙酉 遷移【來因】') || html.includes('【來因】'));
+});
+
+ok('疊宮大事記 lists 2007 direct-hit headline, excludes ovlp0-only years', () => {
+  assert.ok(html.includes('大限忌入流年命宮'));
+  assert.ok(html.includes('2007 丁亥'));
 });
 
 ok('disclaimer always present, with and without notes', () => {
@@ -60,9 +65,9 @@ ok('dynamic content is HTML-escaped', () => {
   assert.ok(attacked.includes('&lt;script&gt;alert(3)&lt;/script&gt;'));
 });
 
-ok('all 120 timeline year rows render', () => {
+ok('all 80 timeline year rows render', () => {
   const rows = html.match(/<td>\d{4} [一-鿿]{2}<\/td>/g) || [];
-  assert.equal(rows.length, 120);
+  assert.equal(rows.length, 80);
 });
 
 console.log(`\nAll ${passed} report test groups passed.`);

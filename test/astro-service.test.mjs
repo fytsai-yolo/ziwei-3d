@@ -29,7 +29,7 @@ ok('BRANCH_GRID covers all 12 branches with valid 4x4 rim positions', () => {
 
 ok('constants', () => {
   assert.deepEqual(MUTAGEN_KEYS, ['祿', '權', '科', '忌']);
-  assert.deepEqual(LAYER_DEFS.map(d => d.id), ['natal', 'decadal', 'yearly', 'monthly', 'daily']);
+  assert.deepEqual(LAYER_DEFS.map(d => d.id), ['natal', 'decadal', 'yearly']);
   assert.equal(MUT_CLASS['忌'], 'mut-ji');
 });
 
@@ -45,13 +45,11 @@ ok('meta matches probe', () => {
 });
 
 ok('layer order and stem-branches match probe', () => {
-  assert.deepEqual(data.layers.map(l => l.id), ['natal', 'decadal', 'yearly', 'monthly', 'daily']);
+  assert.deepEqual(data.layers.map(l => l.id), ['natal', 'decadal', 'yearly']);
   const sb = Object.fromEntries(data.layers.map(l => [l.id, l.stemBranch]));
   assert.equal(sb.natal, '庚辰');
   assert.equal(sb.decadal, '庚辰');
   assert.equal(sb.yearly, '乙巳');
-  assert.equal(sb.monthly, '癸未');
-  assert.equal(sb.daily, '丁丑');
 });
 
 const [natal, decadal, yearly] = data.layers;

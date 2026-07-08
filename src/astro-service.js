@@ -31,8 +31,6 @@ export const LAYER_DEFS = [
   { id: 'natal',   label: '本命' },
   { id: 'decadal', label: '大限' },
   { id: 'yearly',  label: '流年' },
-  { id: 'monthly', label: '流月' },
-  { id: 'daily',   label: '流日' },
 ];
 
 /**
@@ -150,8 +148,6 @@ export function buildChartData({ solarDate, timeIndex, gender, targetDate }) {
   const horoscopeScopes = [
     { scope: h.decadal, id: 'decadal', label: '大限' },
     { scope: h.yearly, id: 'yearly', label: '流年' },
-    { scope: h.monthly, id: 'monthly', label: '流月' },
-    { scope: h.daily, id: 'daily', label: '流日' },
   ];
 
   horoscopeScopes.forEach(({ scope, id, label }) => {

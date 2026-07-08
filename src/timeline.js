@@ -1,4 +1,5 @@
 import { STEM_MUTAGEN } from './fly-engine.js';
+import { evaluateOverlap } from './overlap-engine.js';
 
 const STEMS = '甲乙丙丁戊己庚辛壬癸';
 const BRANCHES = '子丑寅卯辰巳午未申酉戌亥';
@@ -42,7 +43,7 @@ function locate(cells, starName, isAdjective = false) {
 function decadalForXuSui(cells, xuSui) {
   for (const cell of cells) {
     if (cell.decadalRange && xuSui >= cell.decadalRange[0] && xuSui <= cell.decadalRange[1]) {
-      return { palaceIndex: cell.branchIndex, palaceName: cell.palaceName, range: cell.decadalRange };
+      return { palaceIndex: cell.branchIndex, palaceName: cell.palaceName, range: cell.decadalRange, stem: cell.stem };
     }
   }
   return null; // Represents '童限' (childhood)
@@ -55,6 +56,11 @@ const SEVERITY_WEIGHTS = {
   'good1': 1,
   'love': 1,
   'note': 0,
+  // 疊宮 multi-layer overlap engine tiers (src/overlap-engine.js)
+  'ovlp0': 0,
+  'ovlp1': -1,
+  'ovlp2': -2,
+  'ovlp3': -3,
 };
 
 /**
@@ -86,8 +92,8 @@ export function buildTimeline(chart) {
 
   const years = [];
 
-  // Iterate from birthYear to birthYear + 119 (虛歲 1 to 120)
-  for (let Y = birthYear; Y < birthYear + 120; Y++) {
+  // Iterate from birthYear to birthYear + 79 (虛歲 1 to 80)
+  for (let Y = birthYear; Y < birthYear + 80; Y++) {
     const xuSui = Y - birthYear + 1;
     const { stem, branch, ganzhi } = getGanzhi(Y);
 
@@ -159,6 +165,16 @@ export function buildTimeline(chart) {
       addFlag('stack-decadal-life', '流命疊大限命', 'note');
     }
 
+    // 疊宮 multi-layer (生年/大限/流年) 四化 convergence — see src/overlap-engine.js
+    const overlapHits = evaluateOverlap({
+      birthStem: chart.meta.yearStem,
+      decadalStem: decadal ? decadal.stem : null,
+      decadalLifeIndex: decadal ? decadal.palaceIndex : null,
+      yearStem: stem,
+      flowLifeIndex,
+    }, cells);
+    overlapHits.forEach((h) => addFlag(h.id, h.label, h.severity));
+
     years.push({
       year: Y,
       xuSui,
@@ -168,6 +184,7 @@ export function buildTimeline(chart) {
       decadal,
       flowLifeIndex,
       flags,
+      overlap: overlapHits,
       score,
     });
   }

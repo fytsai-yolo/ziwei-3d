@@ -229,6 +229,11 @@ form button[type="submit"] {
 .yflag-good1 { background: rgba(63, 191, 111, 0.75); color: #fff; }
 .yflag-love { background: rgba(255, 127, 177, 0.75); color: #fff; }
 .yflag-note { background: rgba(255, 255, 255, 0.18); color: var(--color-text-light); }
+/* 疊宮 multi-layer overlap engine tiers (src/overlap-engine.js) */
+.yflag-ovlp0 { background: rgba(255, 255, 255, 0.12); color: var(--color-text-dim); }
+.yflag-ovlp1 { background: rgba(208, 53, 85, 0.35); color: #ffd7de; }
+.yflag-ovlp2 { background: rgba(208, 53, 85, 0.7); color: #fff; }
+.yflag-ovlp3 { background: rgba(160, 20, 55, 0.95); color: #fff; font-weight: bold; }
 .year-note {
     margin-top: 6px;
     padding: 6px 8px;

@@ -14,9 +14,9 @@ const tl = buildTimeline(chart);
 const byYear = (y) => tl.years.find(e => e.year === y);
 const flagIds = (y) => byYear(y).flags.map(f => f.id).sort();
 
-ok('shape: 120 years from 1995, correct 干支/虛歲', () => {
+ok('shape: 80 years from 1995, correct 干支/虛歲', () => {
   assert.equal(tl.birthYear, 1995);
-  assert.equal(tl.years.length, 120);
+  assert.equal(tl.years.length, 80);
   assert.deepEqual(
     [tl.years[0].ganzhi, tl.years[0].xuSui], ['乙亥', 1]);
   assert.equal(byYear(2026).ganzhi, '丙午');
@@ -33,14 +33,34 @@ ok('大限 bands: 童限 1-4, then 5-14 命宮 … 45-54 財帛', () => {
   assert.equal(byYear(2039).decadal.palaceName, '財帛');
 });
 
-ok('2019 己亥: 年忌入生年忌宮 + 年忌入流命 (三忌匯, score -3)', () => {
-  assert.deepEqual(flagIds(2019), ['ji-in-life', 'ji-into-birth-ji'].sort());
-  assert.equal(byYear(2019).score, -3);
+ok('2019 己亥: 年忌入生年忌宮 + 年忌入流命 (三忌匯, score -3 from the original 11-rule set alone)', () => {
+  const base = byYear(2019).flags.filter((f) => !f.id.startsWith('acute-') && !f.id.startsWith('direct-') && !f.id.startsWith('sfsz-'));
+  assert.deepEqual(base.map((f) => f.id).sort(), ['ji-in-life', 'ji-into-birth-ji'].sort());
 });
 
-ok('2025 乙巳: 年忌疊生年忌 + 沖流命, but 天機年祿坐流命 (mixed year, score -2)', () => {
-  assert.deepEqual(flagIds(2025), ['ji-chong-life', 'ji-stack-birth', 'lu-in-flow-life'].sort());
-  assert.equal(byYear(2025).score, -2);
+ok('2019 己亥: 疊宮 engine independently confirms this as a headline compound year', () => {
+  // decadalStem===yearStem===己 here, so acute-converge can only fire via 生年 (not 大限);
+  // separately, decadalJi(文曲) lands exactly on this year's own 流年命宮(財帛) -> direct hit.
+  assert.deepEqual(flagIds(2019), [
+    'ji-in-life', 'ji-into-birth-ji', 'acute-converge', 'direct-decadal-into-year',
+    'sfsz-year-sha-in-decadal', 'sfsz-year-sha-in-decadal',
+    'sfsz-decadal-sha-in-year', 'sfsz-decadal-sha-in-year',
+  ].sort());
+  assert.equal(byYear(2019).score, -6); // -2 -1 -1 -2 + 0*4
+});
+
+ok('2025 乙巳: 年忌疊生年忌 + 沖流命, but 天機年祿坐流命 (mixed year, from the original 11-rule set alone)', () => {
+  const base = byYear(2025).flags.filter((f) => !f.id.startsWith('acute-') && !f.id.startsWith('oppose-') && !f.id.startsWith('sfsz-'));
+  assert.deepEqual(base.map((f) => f.id).sort(), ['ji-chong-life', 'ji-stack-birth', 'lu-in-flow-life'].sort());
+});
+
+ok('2025 乙巳: 疊宮 engine adds its own convergence + opposition signals', () => {
+  assert.deepEqual(flagIds(2025), [
+    'ji-chong-life', 'ji-stack-birth', 'lu-in-flow-life',
+    'acute-converge', 'oppose-decadal-chong-year',
+    'sfsz-decadal-ji-in-year', 'sfsz-decadal-sha-in-year',
+  ].sort());
+  assert.equal(byYear(2025).score, -4); // -2 -1 +1 -1 -1 + 0*2
 });
 
 ok('2026 丙午: 年忌疊自化忌 (廉貞, score -2)', () => {

@@ -298,10 +298,8 @@ function updateInfoPanel(branchIndex) {
     const header = _createElement('div', 'info-header', `${natalCell.stem}${natalCell.branch} 宮`);
     infoPanel.appendChild(header);
 
-    // Iterate layers from TOP to BOTTOM (daily first)
-    // LAYER_DEFS order: natal, decadal, yearly, monthly, daily
-    // chartData.layers will be in the same order.
-    // So, we reverse chartData.layers to get daily first.
+    // Iterate layers from TOP to BOTTOM (yearly first)
+    // LAYER_DEFS order: natal, decadal, yearly — reverse to show yearly first.
     const reversedLayers = [...chartData.layers].reverse();
 
     reversedLayers.forEach(layer => {

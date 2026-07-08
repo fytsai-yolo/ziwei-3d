@@ -165,6 +165,25 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
     confluenceHtml += '<ul>' + confluenceLines.join('') + '</ul>';
   }
 
+  // D2. 疊宮大事記 — headline multi-layer overlap events only (severity above 'ovlp0'),
+  // the full detail (including lower-severity 三方 notes) still appears per-row in 流年提要.
+  const overlapYears = (timeline && timeline.years ? timeline.years : [])
+    .filter(item => (item.overlap || []).some(h => h.severity !== 'ovlp0'));
+  let overlapHtml = '<h2>疊宮大事記</h2>';
+  if (overlapYears.length === 0) {
+    overlapHtml += '<p>本命盤在推算範圍內無顯著跨層疊宮事件。</p>';
+  } else {
+    overlapHtml += '<ul>';
+    overlapYears.forEach(item => {
+      const headline = (item.overlap || [])
+        .filter(h => h.severity !== 'ovlp0')
+        .map(h => h.label)
+        .join('、');
+      overlapHtml += `<li><b>${esc(item.year)} ${esc(item.ganzhi || '')}</b>（虛${esc(item.xuSui)}）：${esc(headline)}</li>`;
+    });
+    overlapHtml += '</ul>';
+  }
+
   // E. Timeline
   let timelineHtml = '<h2>流年提要</h2>';
   if (!timeline || !timeline.years || timeline.years.length === 0) {
@@ -326,6 +345,7 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
   ${patternsHtml}
   ${cellsTableHtml}
   ${confluenceHtml}
+  ${overlapHtml}
   ${timelineHtml}
   ${domainsHtml}
 
