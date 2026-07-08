@@ -754,6 +754,9 @@ form button[type="submit"] {
 }
 
 .merged-chart {
+    /* Positioned so the .fly-overlay SVG anchors to THIS square, not #flat-view —
+       otherwise the arrow coordinate system stretches over the whole viewport. */
+    position: relative;
     width: min(88vmin, 860px);
     height: auto;
     aspect-ratio: 1 / 1;

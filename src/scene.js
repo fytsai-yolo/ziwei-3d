@@ -69,6 +69,9 @@ export class Scene {
      */
     _onPointerDown(e) {
         if (e.button !== 0) return; // Only left mouse button
+        // Never capture presses on real controls (e.g. the 展開/收合 button): pointer
+        // capture retargets the click to the viewport, which would swallow it.
+        if (e.target.closest('button, input, select, label')) return;
         this.isDragging = true;
         this.downTarget = e.target; // remember the real target before capture retargets events
         this.viewportEl.setPointerCapture(e.pointerId);
