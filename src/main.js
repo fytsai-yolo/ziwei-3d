@@ -8,7 +8,7 @@ import { buildReportHTML } from './report.js';
 import { renderMergedChart } from './merged-renderer.js';
 import { matchPalaceKnowledge, composeYearText } from './kb-engine.js';
 import { KB_ENTRIES, YEAR_TEMPLATES } from './kb/index.js';
-import { composeFlightReading } from './fly-reader.js';
+import { composeFlightReading, composeFinalParagraph } from './fly-reader.js';
 
 let scene;
 let chartData = null; // Stores the latest chart data
@@ -268,8 +268,8 @@ function bindOverlapHover(containerId) {
     });
 }
 
-/** Appends the layered 飛化 readings for the clicked palace to the info panel. */
-function renderFlightReadings(readings) {
+/** Appends the layered 飛化 readings + 🎯 最終解盤 for the clicked palace to the info panel. */
+function renderFlightReadings(readings, finals) {
     const valid = readings.filter(Boolean);
     if (valid.length === 0) return;
     infoPanel.appendChild(_createElement('div', 'kb-title', '飛化解讀'));
@@ -279,6 +279,15 @@ function renderFlightReadings(readings) {
         row.appendChild(_createElement('div', 'fly-read-text', r.text));
         infoPanel.appendChild(row);
     });
+    const validFinals = (finals || []).filter(Boolean);
+    if (validFinals.length > 0) {
+        infoPanel.appendChild(_createElement('div', 'kb-title', '🎯 最終解盤'));
+        const block = _createElement('div', 'final-read');
+        validFinals.forEach(text => {
+            block.appendChild(_createElement('p', [], `「${text}」`));
+        });
+        infoPanel.appendChild(block);
+    }
 }
 
 /** Re-applies the current fly-mode visuals (after rebuild or mode switch). */
@@ -462,9 +471,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }));
         // Layered 疊宮 readings: shown in the info panel and as arrow tooltips
         const readings = flights.map(f => composeFlightReading(chartData, { fromIndex: branchIndex, ...f }));
+        const finals = flights.map(f => composeFinalParagraph(chartData, { fromIndex: branchIndex, ...f }));
         flights.forEach((f, i) => { if (readings[i]) f.title = readings[i].title; });
         mergedOverlay.drawPalaceFlights(branchIndex, flights);
-        renderFlightReadings(readings);
+        renderFlightReadings(readings, finals);
     });
 
     // Click on the chart center: draw the natal 生年四化
