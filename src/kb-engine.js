@@ -14,6 +14,12 @@
 
 export const KB_SOURCES = ['古籍', '現代通行', 'AI生成待核'];
 export const KB_PALACE_NAMES = ['命宮', '兄弟', '夫妻', '子女', '財帛', '疾厄', '遷移', '僕役', '官祿', '田宅', '福德', '父母'];
+// Whitelist of star names usable in match.star / match.withStars — catches romanized
+// or misspelled names in generated content (has actually happened twice).
+export const KB_STAR_NAMES = [
+  '紫微', '天機', '太陽', '武曲', '天同', '廉貞', '天府', '太陰', '貪狼', '巨門', '天相', '天梁', '七殺', '破軍',
+  '文昌', '文曲', '左輔', '右弼', '天魁', '天鉞', '祿存', '天馬', '擎羊', '陀羅', '火星', '鈴星', '地空', '地劫',
+];
 
 /**
  * Validates a batch of knowledge base entries against the database schema constraints.
@@ -83,6 +89,13 @@ export function validateEntries(entries) {
 
     if (m.palaceName && !KB_PALACE_NAMES.includes(m.palaceName)) {
       errors.push(`${path}: "palaceName" must be one of: ${KB_PALACE_NAMES.join(', ')}.`);
+    }
+
+    if (m.star && !KB_STAR_NAMES.includes(m.star)) {
+      errors.push(`${path}: "star" value "${m.star}" is not a known star name.`);
+    }
+    if (m.withStars && m.withStars.some(s => !KB_STAR_NAMES.includes(s))) {
+      errors.push(`${path}: "withStars" contains an unknown star name.`);
     }
 
     if (m.mutagen && !['祿', '權', '科', '忌'].includes(m.mutagen)) {

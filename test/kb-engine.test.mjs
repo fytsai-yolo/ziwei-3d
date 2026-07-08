@@ -14,7 +14,8 @@ function ok(name, fn) { fn(); passed++; console.log('[PASS]', name); }
 ok('ALL content entries pass schema validation', () => {
   const errors = validateEntries(KB_ENTRIES);
   assert.deepEqual(errors, [], `validation errors:\n${errors.join('\n')}`);
-  assert.equal(KB_ENTRIES.length, 218); // 168 star-palace + 39 sihua + 11 patterns
+  assert.equal(KB_ENTRIES.length, 438);
+  // 168 star-palace + 168 aux/sha/kongjie-palace + 24 雙星 + 28 亮度 + 39 sihua + 11 patterns
 });
 
 ok('validateEntries catches bad entries', () => {
@@ -26,6 +27,11 @@ ok('validateEntries catches bad entries', () => {
     .some(e => e.includes('source')));
   const dup = { id: 'x', match: { star: '紫微' }, text: 't', source: '現代通行', weight: 1 };
   assert.ok(validateEntries([dup, { ...dup }]).some(e => e.includes('duplicate')));
+  // Star-name whitelist: catches romanized/misspelled names (regression: happened twice)
+  assert.ok(validateEntries([{ id: 'x', match: { star: 'wuqu' }, text: 't', source: '現代通行', weight: 1 }])
+    .some(e => e.includes('not a known star name')));
+  assert.ok(validateEntries([{ id: 'x', match: { star: '紫微', withStars: ['tianfu'] }, text: 't', source: '現代通行', weight: 1 }])
+    .some(e => e.includes('unknown star name')));
 });
 
 const chart = buildChartData({
@@ -50,6 +56,30 @@ ok('matcher: reference chart palaces get correct star-palace + sihua entries', (
   assert.ok(hai.includes('sihua-taiyin-ji'));
   // weight sorting: sihua (3) before 財帛-tier star-palace (2)
   assert.ok(hai.indexOf('sihua-taiyin-ji') < hai.indexOf('taiyin-caibo'));
+});
+
+ok('expansion: 輔煞星/雙星/亮度 entries match the reference chart correctly', () => {
+  // 卯(1) 命宮: 文昌+祿存 minors → aux entries; 太陽廟/天梁廟 → strong brightness
+  const mao = perPalace[1].map(e => e.id);
+  assert.ok(mao.includes('wenchang-minggong'));
+  assert.ok(mao.includes('lucun-minggong'));
+  assert.ok(mao.includes('bright-taiyang-strong'));
+  assert.ok(!mao.includes('bright-taiyang-weak'));
+  // 寅(0) 兄弟: 右弼+陀羅 minors; 武曲天相 same palace → no duo entry (not a listed pair? 武曲天相 IS listed)
+  const yin = perPalace[0].map(e => e.id);
+  assert.ok(yin.includes('youbi-xiongdi'));
+  assert.ok(yin.includes('tuoluo-xiongdi'));
+  assert.ok(yin.includes('duo-wuqu-tianxiang'));
+  // 丑(11) 夫妻: 天同[不]巨門[不] → duo + both weak-brightness entries
+  const chou = perPalace[11].map(e => e.id);
+  assert.ok(chou.includes('duo-tiantong-jumen'));
+  assert.ok(chou.includes('bright-tiantong-weak'));
+  assert.ok(chou.includes('bright-jumen-weak'));
+  // 辰(2) 父母: 七殺廟+擎羊火星地空 → sha/kongjie entries
+  const chen = perPalace[2].map(e => e.id);
+  assert.ok(chen.includes('qingyang-fumu'));
+  assert.ok(chen.includes('huoxing-fumu'));
+  assert.ok(chen.includes('dikong-fumu'));
 });
 
 ok('matcher: every palace with a major star gets at least one entry; empty palaces get none from star rules', () => {
