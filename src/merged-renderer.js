@@ -125,63 +125,51 @@ export function renderMergedChart(chart, opts = {}) {
     });
     palaceDiv.appendChild(starsDiv);
 
-    // 3. Overlay Strip
-    const overlayStrip = el('div', 'overlay-strip');
-
-    // a) Relabel tags
+    // 3. Per-layer rows: one line for 大限, one for 流年 — each holds that layer's
+    // relabel tag, flow stars, and mutagen hits, in a fixed reading order.
     if (decadalCell) {
+      const row = el('div', 'layer-row row-decadal');
       const isLife = decadalCell.isLifePalace ? ' is-life' : '';
-      overlayStrip.appendChild(el('span', `ltag ltag-decadal${isLife}`, `限·${decadalCell.palaceName}`));
-    }
-    if (yearlyCell) {
-      const isLife = yearlyCell.isLifePalace ? ' is-life' : '';
-      overlayStrip.appendChild(el('span', `ltag ltag-yearly${isLife}`, `年·${yearlyCell.palaceName}`));
-    }
-
-    // b) Flow stars
-    if (decadalCell && decadalCell.flowStars) {
-      decadalCell.flowStars.forEach(fs => {
-        overlayStrip.appendChild(el('span', 'star flow flow-decadal', fs.name));
+      row.appendChild(el('span', `ltag ltag-decadal${isLife}`, `限·${decadalCell.palaceName}`));
+      (decadalCell.flowStars || []).forEach(fs => {
+        row.appendChild(el('span', 'star flow flow-decadal', fs.name));
       });
-    }
-    if (yearlyCell && yearlyCell.flowStars) {
-      yearlyCell.flowStars.forEach(fs => {
-        overlayStrip.appendChild(el('span', 'star flow flow-yearly', fs.name));
-      });
-    }
-
-    // c) Mutagen hits
-    if (decadalCell && decadalCell.mutagenHits) {
-      decadalCell.mutagenHits.forEach(hit => {
+      (decadalCell.mutagenHits || []).forEach(hit => {
         const mClass = MUT_CLASS[hit.key] || '';
-        overlayStrip.appendChild(el('span', `mut-hit ${mClass}`, `限·${hit.star}${hit.key}`));
+        row.appendChild(el('span', `mut-hit ${mClass}`, `限·${hit.star}${hit.key}`));
       });
-    }
-    if (yearlyCell && yearlyCell.mutagenHits) {
-      yearlyCell.mutagenHits.forEach(hit => {
-        const mClass = MUT_CLASS[hit.key] || '';
-        overlayStrip.appendChild(el('span', `mut-hit ${mClass}`, `年·${hit.star}${hit.key}`));
-      });
+      palaceDiv.appendChild(row);
     }
 
-    // d) Palace overlap hits
     const overlapHits = opts.overlapHits || [];
-    overlapHits.forEach(entry => {
-      if (entry.palaceIndex === cell.branchIndex && entry.severity !== 'ovlp0') {
-        const chip = el('span', `ovlp-chip ${entry.severity}`, '疊');
-        chip.setAttribute('title', entry.label || '');
-        // Hover-highlight wiring: main.js reads these to glow the event's palaces
-        chip.setAttribute('data-ovlp-palace', entry.palaceIndex.toString());
-        chip.setAttribute('data-ovlp-severity', entry.severity);
-        if (entry.relatedIndex !== null && entry.relatedIndex !== undefined) {
-          chip.setAttribute('data-ovlp-related', entry.relatedIndex.toString());
-          chip.setAttribute('data-ovlp-link', entry.id.startsWith('oppose') ? '沖' : '入');
+    if (yearlyCell) {
+      const row = el('div', 'layer-row row-yearly');
+      const isLife = yearlyCell.isLifePalace ? ' is-life' : '';
+      row.appendChild(el('span', `ltag ltag-yearly${isLife}`, `年·${yearlyCell.palaceName}`));
+      (yearlyCell.flowStars || []).forEach(fs => {
+        row.appendChild(el('span', 'star flow flow-yearly', fs.name));
+      });
+      (yearlyCell.mutagenHits || []).forEach(hit => {
+        const mClass = MUT_CLASS[hit.key] || '';
+        row.appendChild(el('span', `mut-hit ${mClass}`, `年·${hit.star}${hit.key}`));
+      });
+      // 疊宮 chips live on the yearly row — overlap events are year-scoped by design
+      overlapHits.forEach(entry => {
+        if (entry.palaceIndex === cell.branchIndex && entry.severity !== 'ovlp0') {
+          const chip = el('span', `ovlp-chip ${entry.severity}`, '疊');
+          chip.setAttribute('title', entry.label || '');
+          // Hover-highlight wiring: main.js reads these to glow the event's palaces
+          chip.setAttribute('data-ovlp-palace', entry.palaceIndex.toString());
+          chip.setAttribute('data-ovlp-severity', entry.severity);
+          if (entry.relatedIndex !== null && entry.relatedIndex !== undefined) {
+            chip.setAttribute('data-ovlp-related', entry.relatedIndex.toString());
+            chip.setAttribute('data-ovlp-link', entry.id.startsWith('oppose') ? '沖' : '入');
+          }
+          row.appendChild(chip);
         }
-        overlayStrip.appendChild(chip);
-      }
-    });
-
-    palaceDiv.appendChild(overlayStrip);
+      });
+      palaceDiv.appendChild(row);
+    }
 
     // 4. Footer Row
     const changsheng = cell.changsheng12 || '';

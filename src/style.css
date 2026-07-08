@@ -322,56 +322,7 @@ form button[type="submit"] {
     flex: 1;
     position: relative;
     overflow: hidden;
-    touch-action: none; /* Disable default touch actions for custom interaction */
-    cursor: grab;
     user-select: none; /* Disable text selection */
-}
-
-#viewport:active {
-    cursor: grabbing;
-}
-
-/* 3D Chart Elements */
-#viewport > .stage {
-    position: absolute;
-    inset: 0; /* fills viewport */
-    perspective: 1600px;
-    perspective-origin: 50% 50%;
-}
-
-.stage > .stack {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 0; /* Base for transform-origin */
-    height: 0; /* Base for transform-origin */
-    transform-style: preserve-3d;
-    /* JS sets transform: scale/rotateX/rotateZ */
-}
-
-.stack > .layer-wrap {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    width: 560px;
-    height: 560px;
-    transform-style: preserve-3d;
-    /* JS sets transform: translate(-50%, -50%) translateZ(...) and opacity */
-    transform: translate(-50%, -50%);
-}
-
-.layer-wrap > .layer {
-    position: relative; /* anchor for the .fly-overlay SVG */
-    width: 100%;
-    height: 100%;
-    display: grid;
-    grid-template: repeat(4, 1fr) / repeat(4, 1fr);
-    gap: 2px;
-    background: var(--color-layer-bg);
-    border: 1px solid var(--color-gold-subtle);
-    box-shadow: 0 0 15px rgba(0,0,0,0.4), 0 0 30px rgba(212,175,55,0.1);
-    backdrop-filter: blur(2px);
-    backface-visibility: visible;
 }
 
 /* Palace styles */
@@ -606,41 +557,6 @@ form button[type="submit"] {
     margin-top: 8px;
 }
 
-/* Layer specific tints */
-.layer[data-layer-id='natal'] {
-    border-color: var(--layer-natal-border);
-}
-.layer[data-layer-id='natal'] .layer-label {
-    color: var(--layer-natal-label);
-}
-
-.layer[data-layer-id='decadal'] {
-    border-color: var(--layer-decadal-border);
-}
-.layer[data-layer-id='decadal'] .layer-label {
-    color: var(--layer-decadal-label);
-}
-
-.layer[data-layer-id='yearly'] {
-    border-color: var(--layer-yearly-border);
-}
-.layer[data-layer-id='yearly'] .layer-label {
-    color: var(--layer-yearly-label);
-}
-
-.layer[data-layer-id='monthly'] {
-    border-color: var(--layer-monthly-border);
-}
-.layer[data-layer-id='monthly'] .layer-label {
-    color: var(--layer-monthly-label);
-}
-
-.layer[data-layer-id='daily'] {
-    border-color: var(--layer-daily-border);
-}
-.layer[data-layer-id='daily'] .layer-label {
-    color: var(--layer-daily-label);
-}
 
 /* Year timeline strip */
 #timeline {
@@ -730,50 +646,48 @@ form button[type="submit"] {
     line-height: 1.1;
 }
 
-/* ===== View modes: flat merged 疊宮盤 (default) vs exploded 3D stack ===== */
+/* ===== The flat merged 疊宮盤 (the app's single chart view) ===== */
 #flat-view {
     position: absolute;
     inset: 0;
-    display: none;
+    display: flex;
     align-items: flex-start;
     justify-content: center;
     overflow: auto;
     padding: 16px;
-    z-index: 2;
-}
-#viewport.mode-flat #flat-view { display: flex; }
-#viewport.mode-flat .stage { display: none; }
-#viewport.mode-flat { cursor: default; }
-
-#view-toggle {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    z-index: 5;
-    margin-top: 0;
 }
 
 .merged-chart {
     /* Positioned so the .fly-overlay SVG anchors to THIS square, not #flat-view —
        otherwise the arrow coordinate system stretches over the whole viewport. */
     position: relative;
+    display: grid;
+    grid-template: repeat(4, 1fr) / repeat(4, 1fr);
+    gap: 2px;
     width: min(88vmin, 860px);
     height: auto;
     aspect-ratio: 1 / 1;
     flex-shrink: 0;
     margin: auto;
+    background: var(--color-layer-bg);
+    border: 1px solid var(--color-gold-subtle);
+    box-shadow: 0 0 15px rgba(0,0,0,0.4), 0 0 30px rgba(212,175,55,0.1);
 }
 .merged-chart .palace { font-size: 12px; }
 
-.overlay-strip {
+/* Per-layer rows inside each cell: 限 row then 年 row, color-keyed left borders */
+.layer-row {
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
     gap: 3px;
-    margin-top: 4px;
-    padding-top: 3px;
-    border-top: 1px dashed rgba(255, 255, 255, 0.15);
-    align-content: flex-start;
+    margin-top: 3px;
+    padding: 1px 0 1px 4px;
+    border-left: 2px solid transparent;
 }
+.layer-row.row-decadal { border-left-color: var(--layer-decadal-border); }
+.layer-row.row-yearly { border-left-color: var(--layer-yearly-border); }
+
 
 .ltag {
     padding: 1px 5px;
@@ -837,11 +751,6 @@ form button[type="submit"] {
 }
 #adj-toggle-label input { accent-color: var(--color-gold); }
 
-/* Expand/collapse lift-apart animation (class added only during the toggle) */
-.stack.animating,
-.stack.animating .layer-wrap {
-    transition: transform 0.8s ease;
-}
 
 /* Responsive layout */
 @media (max-width: 900px) {

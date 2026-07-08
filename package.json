@@ -1,13 +1,13 @@
 {
   "name": "ziwei-3d",
   "version": "1.0.0",
-  "description": "紫微斗數 3D 命盤 — natal/decadal/yearly/monthly/daily layers stacked in 3D",
+  "description": "紫微斗數 疊宮命盤 — 本命/大限/流年 merged flat chart with rule-engine analysis",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "node test/astro-service.test.mjs && node test/fly-engine.test.mjs && node test/overlap-engine.test.mjs && node test/timeline.test.mjs && node test/kb-engine.test.mjs && node test/report.test.mjs && node test/renderer.test.mjs && node test/merged-renderer.test.mjs && node test/arrows.test.mjs"
+    "test": "node test/astro-service.test.mjs && node test/fly-engine.test.mjs && node test/overlap-engine.test.mjs && node test/timeline.test.mjs && node test/kb-engine.test.mjs && node test/report.test.mjs && node test/merged-renderer.test.mjs && node test/arrows.test.mjs"
   },
   "keywords": [],
   "author": "",

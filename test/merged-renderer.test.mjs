@@ -8,7 +8,6 @@ globalThis.document = dom.window.document;
 const { buildChartData } = await import('../src/astro-service.js');
 const { buildTimeline } = await import('../src/timeline.js');
 const { renderMergedChart } = await import('../src/merged-renderer.js');
-const { renderLayer } = await import('../src/renderer.js');
 
 let passed = 0;
 function ok(name, fn) { fn(); passed++; console.log('[PASS]', name); }
@@ -40,29 +39,35 @@ ok('natal content intact in each cell (stars, badges, 自化, foot)', () => {
   assert.ok(you.querySelector('.badge.laiyin')); // 來因 酉
 });
 
-ok('overlay strip: 限/年 relabel tags with is-life marking', () => {
+ok('per-layer rows: 限/年 relabel tags with is-life marking, in fixed row order', () => {
   // 2027, decade 25-34: 大限命宮 at 丑(11); 流年丁未: 流命 at 未(5).
   const chou = el.querySelector('.palace[data-branch-index="11"]');
-  const dTag = chou.querySelector('.ltag-decadal');
+  const dTag = chou.querySelector('.layer-row.row-decadal .ltag-decadal');
   assert.equal(dTag.textContent, '限·命宮');
   assert.ok(dTag.classList.contains('is-life'));
   const wei = el.querySelector('.palace[data-branch-index="5"]');
-  const yTag = wei.querySelector('.ltag-yearly');
+  const yTag = wei.querySelector('.layer-row.row-yearly .ltag-yearly');
   assert.equal(yTag.textContent, '年·命宮');
   assert.ok(yTag.classList.contains('is-life'));
-  // Every cell has both tags
+  // Every cell has both rows, 限 row above 年 row
   el.querySelectorAll('.palace').forEach(p => {
-    assert.ok(p.querySelector('.ltag-decadal'), 'missing 限 tag');
-    assert.ok(p.querySelector('.ltag-yearly'), 'missing 年 tag');
+    const rows = p.querySelectorAll('.layer-row');
+    assert.equal(rows.length, 2, 'expected 限+年 rows');
+    assert.ok(rows[0].classList.contains('row-decadal'));
+    assert.ok(rows[1].classList.contains('row-yearly'));
   });
 });
 
-ok('flow stars carry layer-colored classes; mutagen hits carry 限·/年· prefixes', () => {
-  assert.ok(el.querySelectorAll('.star.flow.flow-decadal').length > 0);
-  assert.ok(el.querySelectorAll('.star.flow.flow-yearly').length > 0);
-  const hitTexts = [...el.querySelectorAll('.mut-hit')].map(h => h.textContent);
-  assert.ok(hitTexts.some(t => t.startsWith('限·')));
-  assert.ok(hitTexts.some(t => t.startsWith('年·')));
+ok('flow stars and mutagen hits live inside their own layer row', () => {
+  assert.ok(el.querySelectorAll('.row-decadal .star.flow.flow-decadal').length > 0);
+  assert.ok(el.querySelectorAll('.row-yearly .star.flow.flow-yearly').length > 0);
+  // No decadal content may leak into a yearly row and vice versa
+  assert.equal(el.querySelectorAll('.row-yearly .flow-decadal').length, 0);
+  assert.equal(el.querySelectorAll('.row-decadal .flow-yearly').length, 0);
+  const dHits = [...el.querySelectorAll('.row-decadal .mut-hit')].map(h => h.textContent);
+  const yHits = [...el.querySelectorAll('.row-yearly .mut-hit')].map(h => h.textContent);
+  assert.ok(dHits.length > 0 && dHits.every(t => t.startsWith('限·')));
+  assert.ok(yHits.length > 0 && yHits.every(t => t.startsWith('年·')));
 });
 
 ok('疊宮 overlap chips appear on their palaces with tooltips, ovlp0 excluded', () => {
@@ -89,17 +94,10 @@ ok('center: 疊宮 label + one 四化 row per layer', () => {
   assert.match(natRow.textContent, /^本命 乙亥/);
 });
 
-ok('renderLayer compact mode strips chips but keeps labels and badges', () => {
-  const yearly = chart.layers[2];
-  const compactEl = renderLayer(yearly, { compact: true });
-  assert.equal(compactEl.querySelectorAll('.palace').length, 12);
-  assert.equal(compactEl.querySelectorAll('.star.flow').length, 0);
-  assert.equal(compactEl.querySelectorAll('.mut-hit').length, 0);
-  assert.ok(compactEl.querySelector('.badge.life'));
-  assert.equal(compactEl.querySelectorAll('.palace-name').length, 12);
-  // Full (default) mode unchanged
-  const fullEl = renderLayer(yearly);
-  assert.ok(fullEl.querySelectorAll('.star.flow').length > 0);
+ok('疊 chips sit on the yearly row (overlap events are year-scoped)', () => {
+  el.querySelectorAll('.ovlp-chip').forEach(c => {
+    assert.ok(c.closest('.row-yearly'), '疊 chip outside the 年 row');
+  });
 });
 
 console.log(`\nAll ${passed} merged-renderer test groups passed.`);

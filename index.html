@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>紫微斗數 3D 命盤</title>
+    <title>紫微斗數 疊宮命盤</title>
     <link rel="stylesheet" href="/src/style.css">
     <script type="module" src="/src/main.js"></script>
 </head>
 <body>
     <div id="app">
         <aside id="sidebar">
-            <h1>紫微斗數 3D 命盤</h1>
+            <h1>紫微斗數 疊宮命盤</h1>
             <form id="chart-form">
                 <label for="birth-date">出生日期(國曆)</label>
                 <input type="date" id="birth-date" required>
@@ -61,12 +61,6 @@
             </div>
 
             <div class="control-group">
-                <label for="spacing">層間距</label>
-                <input type="range" id="spacing" min="40" max="280" value="200">
-                <label for="opacity">透明度</label>
-                <input type="range" id="opacity" min="20" max="100" value="88">
-                <label>顯示層</label>
-                <div id="layer-toggles"></div>
                 <label id="adj-toggle-label"><input type="checkbox" id="adj-toggle">顯示雜曜</label>
             </div>
 
@@ -79,9 +73,8 @@
             <div id="info-panel"></div>
         </aside>
         <main id="main-col">
-            <div id="viewport" class="mode-flat">
+            <div id="viewport">
                 <div id="flat-view"></div>
-                <button type="button" id="view-toggle">展開 3D</button>
             </div>
             <div id="timeline"></div>
         </main>

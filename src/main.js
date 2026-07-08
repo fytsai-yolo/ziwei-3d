@@ -1,5 +1,4 @@
-import { buildChartData, defaultTargetDate, LAYER_DEFS, MUT_CLASS, MUTAGEN_KEYS } from './astro-service.js';
-import { renderLayer } from './renderer.js';
+import { buildChartData, defaultTargetDate, MUT_CLASS, MUTAGEN_KEYS } from './astro-service.js';
 import { Scene } from './scene.js';
 import { createFlyOverlay } from './arrows.js';
 import { buildTimeline, yearSummary } from './timeline.js';
@@ -12,12 +11,10 @@ import { KB_ENTRIES, YEAR_TEMPLATES } from './kb/index.js';
 
 let scene;
 let chartData = null; // Stores the latest chart data
-let overlays = new Map(); // layerId -> fly overlay controller
 let flyMode = 'select'; // 'none' | 'select' | 'heat'
 let timelineCtl = null; // {setSelected} from renderTimeline
 let timelineKey = null; // birth inputs the current timeline was built for
 let currentTimeline = null; // buildTimeline() result for the current chart
-let viewMode = 'flat'; // 'flat' (merged 2D 疊宮盤, default) | '3d' (exploded stack)
 let mergedOverlay = null; // fly-arrow overlay attached to the merged chart
 let mergedLinkOverlay = null; // separate overlay for 疊宮 hover links (so hover doesn't wipe pinned arrows)
 let kbPerPalace = null; // matchPalaceKnowledge result for the current chart
@@ -86,22 +83,6 @@ function formatDateTime(dateTimeString) {
     return `${formatDate(datePart)} ${timePart}`;
 }
 
-/** Populates the #layer-toggles div with checkboxes for each layer. */
-function fillLayerToggles() {
-    const layerTogglesDiv = document.getElementById('layer-toggles');
-    layerTogglesDiv.innerHTML = ''; // Clear existing content
-    LAYER_DEFS.forEach(def => {
-        const label = _createElement('label');
-        const checkbox = _createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.checked = true; // All layers visible by default
-        checkbox.dataset.layerId = def.id;
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(def.label));
-        layerTogglesDiv.appendChild(label);
-    });
-}
-
 /** Sets default values for the chart input form. */
 function setDefaultFormValues() {
     document.getElementById('birth-date').value = '2000-08-16';
@@ -122,8 +103,8 @@ function starBranchIndex(starName) {
 }
 
 function clearAllArrows() {
-    overlays.forEach(ov => ov.clear());
     if (mergedOverlay) mergedOverlay.clear();
+    if (mergedLinkOverlay) mergedLinkOverlay.clear();
 }
 
 /** Overlap-engine hits for the year currently selected on the timeline. */
@@ -148,45 +129,6 @@ function rebuildMergedChart() {
     mergedLinkOverlay = createFlyOverlay(grids);
     mergedEl.appendChild(mergedLinkOverlay.el);
     flatView.appendChild(mergedEl);
-}
-
-/** Switches between the flat merged chart and the exploded 3D stack. */
-function setViewMode(mode, animate = true) {
-    viewMode = mode;
-    const viewportEl = document.getElementById('viewport');
-    const btn = document.getElementById('view-toggle');
-    const stack = viewportEl.querySelector('.stack');
-    const targetSpacing = Number(document.getElementById('spacing').value);
-    if (mode === '3d') {
-        viewportEl.classList.remove('mode-flat');
-        btn.textContent = '收合 2D';
-        if (animate && stack) {
-            // Start flat-and-face-on, then lift apart — the transition teaches the layering.
-            scene.setRotation(0, 0);
-            scene.setSpacing(0);
-            stack.classList.add('animating');
-            requestAnimationFrame(() => requestAnimationFrame(() => {
-                scene.setRotation(-60, 45);
-                scene.setSpacing(targetSpacing);
-                setTimeout(() => stack.classList.remove('animating'), 900);
-            }));
-        }
-    } else {
-        btn.textContent = '展開 3D';
-        if (animate && stack) {
-            stack.classList.add('animating');
-            scene.setRotation(0, 0);
-            scene.setSpacing(0);
-            setTimeout(() => {
-                stack.classList.remove('animating');
-                viewportEl.classList.add('mode-flat');
-                scene.setRotation(-60, 45);
-                scene.setSpacing(targetSpacing);
-            }, 850);
-        } else {
-            viewportEl.classList.add('mode-flat');
-        }
-    }
 }
 
 /** Tints every palace column by its incoming 忌 (red) / 祿 (gold) count from the flyIn index. */
@@ -284,13 +226,12 @@ function updateYearPanel(year) {
     }
 }
 
-/** Glows a 疊宮 event's palaces in BOTH the merged chart and the 3D stack. */
+/** Glows a 疊宮 event's palaces on the chart. */
 function setOverlapHighlight(palaceIndex, relatedIndex, severity, on, linkLabel = '沖') {
     const tier = (severity || 'ovlp1').replace('ovlp', '');
     const mark = (index, cls) => {
-        document.querySelectorAll(
-            `#flat-view .palace[data-branch-index="${index}"], #viewport .stack .palace[data-branch-index="${index}"]`
-        ).forEach(el => el.classList.toggle(cls, on));
+        document.querySelectorAll(`#flat-view .palace[data-branch-index="${index}"]`)
+            .forEach(el => el.classList.toggle(cls, on));
     };
     mark(palaceIndex, `ovlp-hl-${tier}`);
     if (relatedIndex !== null) mark(relatedIndex, 'ovlp-hl-rel');
@@ -352,34 +293,9 @@ function rebuild() {
         chartData = buildChartData({ solarDate, timeIndex, gender, targetDate });
         kbPerPalace = matchPalaceKnowledge(chartData, KB_ENTRIES);
 
-        // Render layers and pass to scene (natal layer is at index 0, so it's bottom).
-        // 大限/流年 layers render compact in 3D — their detail lives in the merged 2D view.
-        const layerElements = chartData.layers.map(layer =>
-            renderLayer(layer, { compact: layer.id !== 'natal' }));
-        scene.setLayers(layerElements);
-
-        // One fly-arrow SVG overlay per layer (grid geometry is shared across layers)
-        overlays = new Map();
-        const grids = chartData.layers[0].cells.map(c => c.grid);
-        chartData.layers.forEach((layer, i) => {
-            const ov = createFlyOverlay(grids);
-            layerElements[i].appendChild(ov.el);
-            overlays.set(layer.id, ov);
-        });
         refreshTimeline();
         rebuildMergedChart(); // after refreshTimeline: overlap chips need the selected year
         applyFlyMode();
-
-        // Re-apply current spacing, opacity, and visibility from UI controls
-        const spacingInput = document.getElementById('spacing');
-        scene.setSpacing(Number(spacingInput.value));
-
-        const opacityInput = document.getElementById('opacity');
-        scene.setOpacity(Number(opacityInput.value) / 100);
-
-        document.querySelectorAll('#layer-toggles input[type="checkbox"]').forEach(checkbox => {
-            scene.setLayerVisible(checkbox.dataset.layerId, checkbox.checked);
-        });
 
         // Update #meta information
         const meta = chartData.meta;
@@ -408,9 +324,9 @@ function rebuild() {
         console.error("Error building chart data:", error);
         metaPanel.textContent = ''; // Clear meta on error
         chartData = null; // Clear chartData on error
-        scene.setLayers([]); // Clear scene layers on error
+        document.getElementById('flat-view').replaceChildren(); // Clear the chart on error
         // clearPin() dispatches branch-select which rewrites the info panel,
-        // so set the error message only after the scene is cleared.
+        // so set the error message only after the chart is cleared.
         scene.clearPin();
         infoPanel.classList.add('error');
         infoPanel.textContent = `生成命盤失敗: ${error.message || error}`;
@@ -501,7 +417,6 @@ function updateInfoPanel(branchIndex) {
 
 // Initialize the app when the DOM is fully loaded
 document.addEventListener('DOMContentLoaded', () => {
-    fillLayerToggles();
     setDefaultFormValues();
 
     scene = new Scene(document.getElementById('viewport'));
@@ -518,51 +433,31 @@ document.addEventListener('DOMContentLoaded', () => {
         rebuild();
     });
 
-    document.getElementById('spacing').addEventListener('input', (e) => {
-        scene.setSpacing(Number(e.target.value));
-    });
-
-    document.getElementById('opacity').addEventListener('input', (e) => {
-        scene.setOpacity(Number(e.target.value) / 100);
-    });
-
-    document.getElementById('layer-toggles').addEventListener('change', (e) => {
-        if (e.target.matches('input[type="checkbox"]')) {
-            scene.setLayerVisible(e.target.dataset.layerId, e.target.checked);
-        }
-    });
-
     // Custom event listener from the Scene class for branch selection changes
     document.getElementById('viewport').addEventListener('branch-select', (e) => {
         updateInfoPanel(e.detail.branchIndex);
-        // Draw the clicked palace's four flights on the layer that was clicked
+        // Draw the clicked palace's four flights
         if (flyMode !== 'select' || e.detail.source !== 'click') return;
         clearAllArrows();
-        const { branchIndex, layerId } = e.detail;
-        if (branchIndex === null || !layerId || !chartData) return;
-        const ov = layerId === 'merged' ? mergedOverlay : overlays.get(layerId);
-        if (!ov) return;
+        const { branchIndex } = e.detail;
+        if (branchIndex === null || !chartData || !mergedOverlay) return;
         const flights = MUTAGEN_KEYS.map(key => ({
             key,
             star: chartData.flying.map[branchIndex][key].star,
             toIndex: chartData.flying.map[branchIndex][key].toIndex,
         }));
-        ov.drawPalaceFlights(branchIndex, flights);
+        mergedOverlay.drawPalaceFlights(branchIndex, flights);
     });
 
-    // Click on a layer's center: draw that layer's own 四化 (生年 for natal, 限/流 otherwise)
-    document.getElementById('viewport').addEventListener('center-select', (e) => {
-        if (flyMode !== 'select' || !chartData) return;
+    // Click on the chart center: draw the natal 生年四化
+    document.getElementById('viewport').addEventListener('center-select', () => {
+        if (flyMode !== 'select' || !chartData || !mergedOverlay) return;
         clearAllArrows();
-        // Merged chart's center shows the natal 生年四化.
-        const isMerged = e.detail.layerId === 'merged';
-        const layer = isMerged ? chartData.layers[0] : chartData.layers.find(l => l.id === e.detail.layerId);
-        const ov = isMerged ? mergedOverlay : overlays.get(e.detail.layerId);
-        if (!layer || !ov) return;
+        const natal = chartData.layers[0];
         const targets = MUTAGEN_KEYS
-            .filter(key => layer.mutagenMap[key])
-            .map(key => ({ key, star: layer.mutagenMap[key], toIndex: starBranchIndex(layer.mutagenMap[key]) }));
-        ov.drawCenterFlights(targets);
+            .filter(key => natal.mutagenMap[key])
+            .map(key => ({ key, star: natal.mutagenMap[key], toIndex: starBranchIndex(natal.mutagenMap[key]) }));
+        mergedOverlay.drawCenterFlights(targets);
     });
 
     // Fly-mode radio switch
@@ -573,14 +468,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Hovering a 疊宮 chip/flag highlights the event's palaces in both views
+    // Hovering a 疊宮 chip/flag highlights the event's palaces on the chart
     bindOverlapHover('flat-view');
     bindOverlapHover('year-panel');
-
-    // Flat ↔ 3D view toggle
-    document.getElementById('view-toggle').addEventListener('click', () => {
-        setViewMode(viewMode === 'flat' ? '3d' : 'flat');
-    });
 
     // 雜曜 visibility (hidden by default — biggest text-noise contributor)
     document.getElementById('adj-toggle').addEventListener('change', (e) => {
