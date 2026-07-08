@@ -8,6 +8,7 @@ import { buildReportHTML } from './report.js';
 import { renderMergedChart } from './merged-renderer.js';
 import { matchPalaceKnowledge, composeYearText } from './kb-engine.js';
 import { KB_ENTRIES, YEAR_TEMPLATES } from './kb/index.js';
+import { composeFlightReading } from './fly-reader.js';
 
 let scene;
 let chartData = null; // Stores the latest chart data
@@ -267,6 +268,19 @@ function bindOverlapHover(containerId) {
     });
 }
 
+/** Appends the layered 飛化 readings for the clicked palace to the info panel. */
+function renderFlightReadings(readings) {
+    const valid = readings.filter(Boolean);
+    if (valid.length === 0) return;
+    infoPanel.appendChild(_createElement('div', 'kb-title', '飛化解讀'));
+    valid.forEach(r => {
+        const row = _createElement('div', 'fly-read');
+        row.appendChild(_createElement('div', ['fly-read-title', MUT_CLASS[r.key]], r.title));
+        row.appendChild(_createElement('div', 'fly-read-text', r.text));
+        infoPanel.appendChild(row);
+    });
+}
+
 /** Re-applies the current fly-mode visuals (after rebuild or mode switch). */
 function applyFlyMode() {
     clearAllArrows();
@@ -446,7 +460,11 @@ document.addEventListener('DOMContentLoaded', () => {
             star: chartData.flying.map[branchIndex][key].star,
             toIndex: chartData.flying.map[branchIndex][key].toIndex,
         }));
+        // Layered 疊宮 readings: shown in the info panel and as arrow tooltips
+        const readings = flights.map(f => composeFlightReading(chartData, { fromIndex: branchIndex, ...f }));
+        flights.forEach((f, i) => { if (readings[i]) f.title = readings[i].title; });
         mergedOverlay.drawPalaceFlights(branchIndex, flights);
+        renderFlightReadings(readings);
     });
 
     // Click on the chart center: draw the natal 生年四化

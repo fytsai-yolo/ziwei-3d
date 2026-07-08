@@ -204,9 +204,9 @@ export function createFlyOverlay(gridPositions, options = {}) {
                 'stroke-linecap': 'round',
                 'marker-end': markerUrl, // Apply the specific arrowhead marker
             });
-            // Add a title element for tooltip functionality
+            // Add a title element for tooltip functionality (layered reading when provided)
             const titleEl = createSvgElement('title');
-            titleEl.textContent = `${star}化${key}`;
+            titleEl.textContent = flight.title || `${star}化${key}`;
             pathEl.appendChild(titleEl);
             flyMarksGroup.appendChild(pathEl);
 
