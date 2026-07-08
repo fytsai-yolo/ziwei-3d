@@ -698,6 +698,105 @@ form button[type="submit"] {
     line-height: 1.1;
 }
 
+/* ===== View modes: flat merged 疊宮盤 (default) vs exploded 3D stack ===== */
+#flat-view {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    overflow: auto;
+    padding: 16px;
+    z-index: 2;
+}
+#viewport.mode-flat #flat-view { display: flex; }
+#viewport.mode-flat .stage { display: none; }
+#viewport.mode-flat { cursor: default; }
+
+#view-toggle {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 5;
+    margin-top: 0;
+}
+
+.merged-chart {
+    width: min(88vmin, 860px);
+    height: auto;
+    aspect-ratio: 1 / 1;
+    flex-shrink: 0;
+    margin: auto;
+}
+.merged-chart .palace { font-size: 12px; }
+
+.overlay-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 4px;
+    padding-top: 3px;
+    border-top: 1px dashed rgba(255, 255, 255, 0.15);
+    align-content: flex-start;
+}
+
+.ltag {
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-size: 10px;
+    line-height: 1.5;
+    border: 1px solid;
+    background: transparent;
+    white-space: nowrap;
+}
+.ltag-natal { border-color: var(--layer-natal-border); color: var(--layer-natal-label); }
+.ltag-decadal { border-color: rgba(180, 0, 180, 0.6); color: #d48fd4; }
+.ltag-yearly { border-color: rgba(0, 220, 220, 0.5); color: #69d8d8; }
+.ltag.is-life { font-weight: bold; background: rgba(255, 255, 255, 0.1); }
+
+.star.flow.flow-decadal { color: #c77fd4; }
+.star.flow.flow-yearly { color: #4dc0c0; }
+
+.ovlp-chip {
+    padding: 1px 5px;
+    border-radius: 8px;
+    font-size: 10px;
+    font-weight: bold;
+    color: #fff;
+    cursor: help;
+}
+.ovlp-chip.ovlp1 { background: rgba(208, 53, 85, 0.5); }
+.ovlp-chip.ovlp2 { background: rgba(208, 53, 85, 0.8); }
+.ovlp-chip.ovlp3 { background: rgba(160, 20, 55, 1); }
+
+.center-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 3px;
+}
+
+/* 雜曜 hidden by default — biggest text-noise source; toggled via sidebar checkbox */
+.star.adj { display: none; }
+#app.show-adj .star.adj { display: inline; }
+#adj-toggle-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    color: var(--color-text-light);
+    margin-top: 8px;
+}
+#adj-toggle-label input { accent-color: var(--color-gold); }
+
+/* Expand/collapse lift-apart animation (class added only during the toggle) */
+.stack.animating,
+.stack.animating .layer-wrap {
+    transition: transform 0.8s ease;
+}
+
 /* Responsive layout */
 @media (max-width: 900px) {
     #app {

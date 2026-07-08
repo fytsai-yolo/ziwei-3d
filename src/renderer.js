@@ -36,9 +36,11 @@ function _appendSelfMutagen(starSpan, starName, selfHits) {
 /**
  * Renders a single chart layer into a detached DOM element.
  * @param {object} layer - The layer data object.
+ * @param {object} [opts] - { compact: true } strips star/hit chips (used for 大限/流年 layers
+ *   in the 3D stack, where cell text is unreadable anyway and lives in the merged 2D view).
  * @returns {HTMLElement} The created layer DOM element.
  */
-export function renderLayer(layer) {
+export function renderLayer(layer, opts = {}) {
     const layerEl = _createElement('div', 'layer');
     layerEl.dataset.layerId = layer.id;
 
@@ -66,6 +68,13 @@ export function renderLayer(layer) {
 
         // Stars section
         const starsDiv = _createElement('div', 'stars');
+        if (opts.compact) {
+            // Compact mode: palace labels + 命宮 badges only; no chips, no foot content.
+            palaceEl.appendChild(starsDiv);
+            palaceEl.appendChild(_createElement('div', 'palace-foot'));
+            layerEl.appendChild(palaceEl);
+            return;
+        }
         if (layer.id === 'natal') {
             cell.majorStars.forEach(star => {
                 const starSpan = _createElement('span', ['star', 'major'], star.name);

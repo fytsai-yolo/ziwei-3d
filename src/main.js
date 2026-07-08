@@ -6,6 +6,7 @@ import { buildTimeline, yearSummary } from './timeline.js';
 import { renderTimeline } from './timeline-ui.js';
 import { getNotesForChart } from './notes-data.js';
 import { buildReportHTML } from './report.js';
+import { renderMergedChart } from './merged-renderer.js';
 
 let scene;
 let chartData = null; // Stores the latest chart data
@@ -14,6 +15,8 @@ let flyMode = 'select'; // 'none' | 'select' | 'heat'
 let timelineCtl = null; // {setSelected} from renderTimeline
 let timelineKey = null; // birth inputs the current timeline was built for
 let currentTimeline = null; // buildTimeline() result for the current chart
+let viewMode = 'flat'; // 'flat' (merged 2D 疊宮盤, default) | '3d' (exploded stack)
+let mergedOverlay = null; // fly-arrow overlay attached to the merged chart
 const infoPanel = document.getElementById('info-panel');
 const metaPanel = document.getElementById('meta');
 
@@ -116,6 +119,67 @@ function starBranchIndex(starName) {
 
 function clearAllArrows() {
     overlays.forEach(ov => ov.clear());
+    if (mergedOverlay) mergedOverlay.clear();
+}
+
+/** Overlap-engine hits for the year currently selected on the timeline. */
+function currentYearOverlapHits() {
+    if (!currentTimeline) return [];
+    const y = parseInt(document.getElementById('target-date').value.slice(0, 4), 10);
+    const entry = currentTimeline.years.find(e => e.year === y);
+    return entry ? (entry.overlap || []) : [];
+}
+
+/** Rebuilds the flat merged 疊宮盤 (default view). */
+function rebuildMergedChart() {
+    const flatView = document.getElementById('flat-view');
+    flatView.replaceChildren();
+    mergedOverlay = null;
+    if (!chartData) return;
+    const mergedEl = renderMergedChart(chartData, { overlapHits: currentYearOverlapHits() });
+    const grids = chartData.layers[0].cells.map(c => c.grid);
+    mergedOverlay = createFlyOverlay(grids);
+    mergedEl.appendChild(mergedOverlay.el);
+    flatView.appendChild(mergedEl);
+}
+
+/** Switches between the flat merged chart and the exploded 3D stack. */
+function setViewMode(mode, animate = true) {
+    viewMode = mode;
+    const viewportEl = document.getElementById('viewport');
+    const btn = document.getElementById('view-toggle');
+    const stack = viewportEl.querySelector('.stack');
+    const targetSpacing = Number(document.getElementById('spacing').value);
+    if (mode === '3d') {
+        viewportEl.classList.remove('mode-flat');
+        btn.textContent = '收合 2D';
+        if (animate && stack) {
+            // Start flat-and-face-on, then lift apart — the transition teaches the layering.
+            scene.setRotation(0, 0);
+            scene.setSpacing(0);
+            stack.classList.add('animating');
+            requestAnimationFrame(() => requestAnimationFrame(() => {
+                scene.setRotation(-60, 45);
+                scene.setSpacing(targetSpacing);
+                setTimeout(() => stack.classList.remove('animating'), 900);
+            }));
+        }
+    } else {
+        btn.textContent = '展開 3D';
+        if (animate && stack) {
+            stack.classList.add('animating');
+            scene.setRotation(0, 0);
+            scene.setSpacing(0);
+            setTimeout(() => {
+                stack.classList.remove('animating');
+                viewportEl.classList.add('mode-flat');
+                scene.setRotation(-60, 45);
+                scene.setSpacing(targetSpacing);
+            }, 850);
+        } else {
+            viewportEl.classList.add('mode-flat');
+        }
+    }
 }
 
 /** Tints every palace column by its incoming 忌 (red) / 祿 (gold) count from the flyIn index. */
@@ -217,8 +281,10 @@ function rebuild() {
     try {
         chartData = buildChartData({ solarDate, timeIndex, gender, targetDate });
 
-        // Render layers and pass to scene (natal layer is at index 0, so it's bottom)
-        const layerElements = chartData.layers.map(layer => renderLayer(layer));
+        // Render layers and pass to scene (natal layer is at index 0, so it's bottom).
+        // 大限/流年 layers render compact in 3D — their detail lives in the merged 2D view.
+        const layerElements = chartData.layers.map(layer =>
+            renderLayer(layer, { compact: layer.id !== 'natal' }));
         scene.setLayers(layerElements);
 
         // One fly-arrow SVG overlay per layer (grid geometry is shared across layers)
@@ -229,8 +295,9 @@ function rebuild() {
             layerElements[i].appendChild(ov.el);
             overlays.set(layer.id, ov);
         });
-        applyFlyMode();
         refreshTimeline();
+        rebuildMergedChart(); // after refreshTimeline: overlap chips need the selected year
+        applyFlyMode();
 
         // Re-apply current spacing, opacity, and visibility from UI controls
         const spacingInput = document.getElementById('spacing');
@@ -390,7 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearAllArrows();
         const { branchIndex, layerId } = e.detail;
         if (branchIndex === null || !layerId || !chartData) return;
-        const ov = overlays.get(layerId);
+        const ov = layerId === 'merged' ? mergedOverlay : overlays.get(layerId);
         if (!ov) return;
         const flights = MUTAGEN_KEYS.map(key => ({
             key,
@@ -404,8 +471,10 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('viewport').addEventListener('center-select', (e) => {
         if (flyMode !== 'select' || !chartData) return;
         clearAllArrows();
-        const layer = chartData.layers.find(l => l.id === e.detail.layerId);
-        const ov = overlays.get(e.detail.layerId);
+        // Merged chart's center shows the natal 生年四化.
+        const isMerged = e.detail.layerId === 'merged';
+        const layer = isMerged ? chartData.layers[0] : chartData.layers.find(l => l.id === e.detail.layerId);
+        const ov = isMerged ? mergedOverlay : overlays.get(e.detail.layerId);
         if (!layer || !ov) return;
         const targets = MUTAGEN_KEYS
             .filter(key => layer.mutagenMap[key])
@@ -419,6 +488,16 @@ document.addEventListener('DOMContentLoaded', () => {
             flyMode = e.target.value;
             applyFlyMode();
         }
+    });
+
+    // Flat ↔ 3D view toggle
+    document.getElementById('view-toggle').addEventListener('click', () => {
+        setViewMode(viewMode === 'flat' ? '3d' : 'flat');
+    });
+
+    // 雜曜 visibility (hidden by default — biggest text-noise contributor)
+    document.getElementById('adj-toggle').addEventListener('change', (e) => {
+        document.getElementById('app').classList.toggle('show-adj', e.target.checked);
     });
 
     // Export a print-friendly report in a new tab

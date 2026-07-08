@@ -62,11 +62,12 @@
 
             <div class="control-group">
                 <label for="spacing">層間距</label>
-                <input type="range" id="spacing" min="40" max="240" value="120">
+                <input type="range" id="spacing" min="40" max="280" value="200">
                 <label for="opacity">透明度</label>
                 <input type="range" id="opacity" min="20" max="100" value="88">
                 <label>顯示層</label>
                 <div id="layer-toggles"></div>
+                <label id="adj-toggle-label"><input type="checkbox" id="adj-toggle">顯示雜曜</label>
             </div>
 
             <div class="control-group">
@@ -78,7 +79,10 @@
             <div id="info-panel"></div>
         </aside>
         <main id="main-col">
-            <div id="viewport"></div>
+            <div id="viewport" class="mode-flat">
+                <div id="flat-view"></div>
+                <button type="button" id="view-toggle">展開 3D</button>
+            </div>
             <div id="timeline"></div>
         </main>
     </div>

@@ -25,7 +25,7 @@ export class Scene {
         this.rotX = -60; // Initial X rotation
         this.rotZ = 45;  // Initial Z rotation
         this.zoom = 0.9; // Initial zoom scale
-        this.spacing = 120; // Default spacing between layers
+        this.spacing = 200; // Default spacing between layers (tuned for a 3-layer stack)
         this.layerWraps = []; // Array of layer-wrap elements
 
         // Interaction state
@@ -125,6 +125,8 @@ export class Scene {
      * @param {WheelEvent} e
      */
     _onWheel(e) {
+        // In flat (merged 2D) mode the wheel should scroll the flat view, not zoom the hidden stack.
+        if (this.viewportEl.classList.contains('mode-flat')) return;
         e.preventDefault(); // Prevent page scrolling
         this.zoom = clamp(this.zoom * (e.deltaY < 0 ? 1.08 : 1 / 1.08), 0.3, 2.5);
         this._applyTransforms();
@@ -245,6 +247,13 @@ export class Scene {
         this._applyTransforms();
     }
 
+    /** Sets rotation directly (used by the flat↔3D expand animation). */
+    setRotation(rotX, rotZ) {
+        this.rotX = rotX;
+        this.rotZ = rotZ;
+        this._applyTransforms();
+    }
+
     /**
      * Highlights a column of palaces across all layers and dispatches an event.
      * @param {number|null} branchIndex The branch index to highlight, or null to clear all highlights.
@@ -252,7 +261,8 @@ export class Scene {
      * @param {'hover'|'click'} source How the selection was made (drives arrow drawing).
      */
     highlight(branchIndex, layerId = null, source = 'hover') {
-        const allPalaces = this.stackEl.querySelectorAll('.palace');
+        // Query the whole viewport so the flat merged chart's cells highlight too.
+        const allPalaces = this.viewportEl.querySelectorAll('.palace');
         allPalaces.forEach(palace => {
             if (palace.dataset.branchIndex === String(branchIndex)) {
                 palace.classList.add('col-highlight');
