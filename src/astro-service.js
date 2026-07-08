@@ -1,7 +1,7 @@
 import { astro } from 'iztro';
 import {
   computeSelfMutagen, computeFlyingMap, computeFlyIn,
-  findLaiyinIndex, detectPatterns,
+  findLaiyinIndex, detectPatterns, traceLuSuiJi,
 } from './fly-engine.js';
 
 /**
@@ -97,6 +97,9 @@ export function buildChartData({ solarDate, timeIndex, gender, targetDate }) {
     soul: astrolabe.soul,
     body: astrolabe.body,
     fiveElementsClass: astrolabe.fiveElementsClass,
+    // 小限 for the target year, straight from iztro (trusted engine, no own math)
+    xiaoXianIndex: h.age ? h.age.index : null,
+    xiaoXianNominalAge: h.age ? h.age.nominalAge : null,
   };
 
   // 3. Construct layers array
@@ -207,8 +210,9 @@ export function buildChartData({ solarDate, timeIndex, gender, targetDate }) {
     bodyIndex: bodyPalaceIndex,
     yearStem,
   });
+  const luSuiJi = traceLuSuiJi(fePalaces, yearStem, flyingMap);
 
-  return { meta, layers, flying: { map: flyingMap, flyIn }, patterns };
+  return { meta, layers, flying: { map: flyingMap, flyIn, luSuiJi }, patterns };
 }
 
 /**

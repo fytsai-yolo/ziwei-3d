@@ -74,4 +74,15 @@ ok('all 80 timeline year rows render', () => {
   assert.equal(rows.length, 80);
 });
 
+ok('report: 祿隨忌走 + 小限 + 飛化總覽 + 流年命宮最終解盤 sections present', () => {
+  assert.ok(html.includes('祿隨忌走'));
+  assert.ok(html.includes('天機祿坐福德(巳)'));
+  assert.ok(html.includes('小限（目標年）'));
+  assert.ok(html.includes('本年飛化總覽'));
+  assert.ok(html.includes('最終解盤'));
+  assert.ok(html.includes('今年，')); // fluent paragraphs rendered
+  // 古籍 quotes with refs appear in the 格局 section
+  assert.ok(html.includes('古籍・骨髓賦') || html.includes('古籍・太微賦'));
+});
+
 console.log(`\nAll ${passed} report test groups passed.`);

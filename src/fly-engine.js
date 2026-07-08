@@ -190,6 +190,49 @@ export function findLaiyinIndex(palaces, yearStem) {
 }
 
 /**
+ * Traces the 祿隨忌走 chain: the palace holding the birth-year 化祿 star commits its
+ * resources wherever its own stem's 化忌 flies; that palace's 忌 carries it onward.
+ * Following the 忌 flights from the 生年祿 palace shows where the natal blessing is
+ * ultimately spent. The walk stops at a self-flight, a revisited palace (cycle), a
+ * missing target, or maxHops.
+ * @param {Array<Object>} palaces - The 12 fly-engine palace objects.
+ * @param {string} yearStem - Birth year stem.
+ * @param {Object} flyingMap - computeFlyingMap() result (map[i][key] = {star, toIndex}).
+ * @param {number} [maxHops=4]
+ * @returns {{luStar: string, startIndex: number, steps: Array<{from:number,to:number,star:string}>, endIndex: number, cycle: boolean}|null}
+ *   null when the birth 祿 star is not found in the chart.
+ */
+export function traceLuSuiJi(palaces, yearStem, flyingMap, maxHops = 4) {
+  const luStar = STEM_MUTAGEN[yearStem]['祿'];
+  let startIndex = null;
+  for (let i = 0; i < 12; i++) {
+    if (allStars(palaces[i]).includes(luStar)) {
+      startIndex = i;
+      break;
+    }
+  }
+  if (startIndex === null) return null;
+
+  const steps = [];
+  const visited = new Set([startIndex]);
+  let cur = startIndex;
+  let cycle = false;
+  for (let hop = 0; hop < maxHops; hop++) {
+    const ji = flyingMap[cur]['忌'];
+    if (!ji || ji.toIndex === null || ji.toIndex === cur) break; // no flight or 自化忌 stops here
+    steps.push({ from: cur, to: ji.toIndex, star: ji.star });
+    if (visited.has(ji.toIndex)) {
+      cycle = true; // the 忌 returns into the chain — energy circulates, stop
+      break;
+    }
+    visited.add(ji.toIndex);
+    cur = ji.toIndex;
+  }
+  const endIndex = steps.length > 0 ? steps[steps.length - 1].to : startIndex;
+  return { luStar, startIndex, steps, endIndex, cycle };
+}
+
+/**
  * Detects specific Zi Wei Dou Shu patterns (格局).
  * @param {Object} params - Object containing chart data.
  * @param {Array<Object>} params.palaces - Array of 12 palace objects.

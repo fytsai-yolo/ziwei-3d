@@ -1,5 +1,6 @@
 import { matchPalaceKnowledge, matchPatternKnowledge, composeYearText } from './kb-engine.js';
 import { KB_ENTRIES, YEAR_TEMPLATES } from './kb/index.js';
+import { composeFlightReading, composeFinalParagraph } from './fly-reader.js';
 
 export const DISCLAIMER ='本報告由程式依紫微斗數傳統命理規則自動生成，所有宮位解讀、格局判定與流年吉凶提示均屬傳統術數之推演，僅供學術研究與娛樂參考使用，不構成任何醫療、投資、法律或人生重大決策之依據。健康問題請以正規醫療檢查為準，財務決策請諮詢持牌專業人士。';
 
@@ -43,6 +44,12 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
       metaRows.push(['來因宮', `${laiyinCell.branch || ''}${laiyinCell.palaceName || ''}`]);
     }
   }
+  if (meta.xiaoXianIndex !== undefined && meta.xiaoXianIndex !== null) {
+    const xxCell = cellMap[meta.xiaoXianIndex];
+    if (xxCell) {
+      metaRows.push(['小限（目標年）', `${xxCell.branch || ''}${xxCell.palaceName || ''}（虛歲 ${meta.xiaoXianNominalAge || ''}）`]);
+    }
+  }
   metaRows.push(['產生時間', genAt]);
 
   let metaTableHtml = '<table class="meta-table">';
@@ -58,10 +65,16 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
   }
   metaTableHtml += '</table>';
 
-  // B. Patterns — enriched with knowledge-base texts (source-labeled)
+  // B. Patterns — enriched with ALL knowledge-base texts per pattern
+  // (a detected pattern may carry both a 現代通行 text and a 古籍 quote)
   const patterns = chart.patterns || [];
   const kbPatternHits = matchPatternKnowledge(chart, KB_ENTRIES);
-  const kbPatternById = new Map(kbPatternHits.map(h => [h.entry.match.patternId, h.entry]));
+  const kbPatternById = new Map();
+  kbPatternHits.forEach(h => {
+    const id = h.entry.match.patternId;
+    if (!kbPatternById.has(id)) kbPatternById.set(id, []);
+    kbPatternById.get(id).push(h.entry);
+  });
   let patternsHtml = '<h2>格局</h2>';
   if (patterns.length === 0) {
     patternsHtml += '<p>無明顯成格。</p>';
@@ -73,14 +86,26 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
         return c ? c.palaceName : '';
       }).filter(Boolean).join('、');
       let line = `<li><b>${esc(p.name)}</b>：${esc(p.note)}（${esc(palNames)}）`;
-      const kbEntry = kbPatternById.get(p.id);
-      if (kbEntry) {
-        line += `<br><span class="kb-text">${esc(kbEntry.text)}<span class="kb-src">〔${esc(kbEntry.source)}〕</span></span>`;
-      }
+      (kbPatternById.get(p.id) || []).forEach(kbEntry => {
+        const srcLabel = kbEntry.source === '古籍' && kbEntry.ref
+          ? `${kbEntry.source}・${kbEntry.ref}` : kbEntry.source;
+        line += `<br><span class="kb-text">${esc(kbEntry.text)}<span class="kb-src">〔${esc(srcLabel)}〕</span></span>`;
+      });
       line += '</li>';
       patternsHtml += line;
     });
     patternsHtml += '</ul>';
+  }
+
+  // B2. 祿隨忌走 — where the natal blessing gets committed, hop by hop
+  let lsjHtml = '';
+  const lsj = (chart.flying && chart.flying.luSuiJi) || null;
+  if (lsj && lsj.steps.length > 0) {
+    const at = (i) => cellMap[i] ? `${cellMap[i].palaceName}(${cellMap[i].branch})` : '';
+    const chainStr = lsj.steps.map(s => `忌(${s.star})→${at(s.to)}`).join(' ');
+    lsjHtml = '<h2>祿隨忌走</h2>'
+      + `<p><b>${esc(lsj.luStar)}祿坐${esc(at(lsj.startIndex))}</b> ${esc(chainStr)}${lsj.cycle ? '（回環）' : ''}</p>`
+      + `<p class="kb-text">生年祿所在之宮，其資源隨宮干化忌逐宮流轉；鏈之終點${esc(at(lsj.endIndex))}即本命福蔭最終投注之處${lsj.cycle ? '，回環表示能量在此數宮間循環消長' : ''}。</p>`;
   }
 
   // C. Twelve Palaces
@@ -154,6 +179,47 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
     kbHtml += '<p>本命盤主星分佈無對應釋義條目。</p>';
   } else {
     kbHtml += kbSections.join('');
+  }
+
+  // C3. 本年飛化總覽 — every palace's four flights, terse layered reading (忌 first),
+  // plus the fluent 🎯 最終解盤 paragraphs for the 流年命宮's own flights.
+  const FLY_KEYS = ['忌', '祿', '權', '科'];
+  const flyMap = (chart.flying && chart.flying.map) || null;
+  let flyHtml = '';
+  if (flyMap) {
+    flyHtml = '<h2>本年飛化總覽</h2>'
+      + '<p class="kb-text">（依目標年份之流年宮名讀之：忌線為課題所在，祿線為資源所向，權科為輔。）</p>';
+    flyHtml += '<table><thead><tr><th style="width:16%;">宮位</th><th style="width:6%;">化</th><th>解讀</th></tr></thead><tbody>';
+    sortedCells.forEach(cell => {
+      const i = cell.branchIndex;
+      FLY_KEYS.forEach((key, ki) => {
+        const flight = flyMap[i][key];
+        const r = composeFlightReading(chart, { fromIndex: i, key, star: flight.star, toIndex: flight.toIndex });
+        if (!r) return;
+        flyHtml += '<tr>';
+        if (ki === 0) {
+          flyHtml += `<td rowspan="4"><b>${esc(cell.stem)}${esc(cell.branch)} ${esc(cell.palaceName)}</b></td>`;
+        }
+        flyHtml += `<td>${esc(key)}</td><td>${esc(r.text)}</td></tr>`;
+      });
+    });
+    flyHtml += '</tbody></table>';
+
+    const yearlyLayer = chart.layers && chart.layers[2];
+    if (yearlyLayer && yearlyLayer.lifeIndex !== null && yearlyLayer.lifeIndex !== undefined) {
+      const li = yearlyLayer.lifeIndex;
+      const paras = FLY_KEYS
+        .map(key => {
+          const flight = flyMap[li][key];
+          return composeFinalParagraph(chart, { fromIndex: li, key, star: flight.star, toIndex: flight.toIndex });
+        })
+        .filter(Boolean);
+      if (paras.length > 0) {
+        const liCell = cellMap[li];
+        flyHtml += `<h3>🎯 流年命宮（${esc(liCell ? liCell.branch : '')}）最終解盤</h3>`;
+        paras.forEach(t => { flyHtml += `<p class="kb-text">「${esc(t)}」</p>`; });
+      }
+    }
   }
 
   // D. Four Mutagen Confluences
@@ -377,8 +443,10 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
   <p style="font-size: 12px; color: #666; margin-top: -10px; margin-bottom: 20px;">（研究／娛樂用途）</p>
 
   ${patternsHtml}
+  ${lsjHtml}
   ${cellsTableHtml}
   ${kbHtml}
+  ${flyHtml}
   ${confluenceHtml}
   ${overlapHtml}
   ${timelineHtml}

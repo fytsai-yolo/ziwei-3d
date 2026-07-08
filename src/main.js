@@ -268,25 +268,39 @@ function bindOverlapHover(containerId) {
     });
 }
 
+/** Collapsible info-panel section: <details> with a styled <summary> title. */
+function _collapsibleSection(title, open = true) {
+    const d = document.createElement('details');
+    d.className = 'panel-sec';
+    d.open = open;
+    const s = document.createElement('summary');
+    s.className = 'kb-title';
+    s.textContent = title;
+    d.appendChild(s);
+    return d;
+}
+
 /** Appends the layered 飛化 readings + 🎯 最終解盤 for the clicked palace to the info panel. */
 function renderFlightReadings(readings, finals) {
     const valid = readings.filter(Boolean);
     if (valid.length === 0) return;
-    infoPanel.appendChild(_createElement('div', 'kb-title', '飛化解讀'));
+    const sec = _collapsibleSection('飛化解讀', false);
     valid.forEach(r => {
         const row = _createElement('div', 'fly-read');
         row.appendChild(_createElement('div', ['fly-read-title', MUT_CLASS[r.key]], r.title));
         row.appendChild(_createElement('div', 'fly-read-text', r.text));
-        infoPanel.appendChild(row);
+        sec.appendChild(row);
     });
+    infoPanel.appendChild(sec);
     const validFinals = (finals || []).filter(Boolean);
     if (validFinals.length > 0) {
-        infoPanel.appendChild(_createElement('div', 'kb-title', '🎯 最終解盤'));
+        const finalSec = _collapsibleSection('🎯 最終解盤', true);
         const block = _createElement('div', 'final-read');
         validFinals.forEach(text => {
             block.appendChild(_createElement('p', [], `「${text}」`));
         });
-        infoPanel.appendChild(block);
+        finalSec.appendChild(block);
+        infoPanel.appendChild(finalSec);
     }
 }
 
@@ -332,6 +346,21 @@ function rebuild() {
         if (chartData.patterns && chartData.patterns.length > 0) {
             metaPanel.appendChild(_createElement('div', 'meta-patterns',
                 `格局：${chartData.patterns.map(p => p.name).join('、')}`));
+        }
+        // 小限 for the target year (iztro-computed)
+        if (meta.xiaoXianIndex !== null) {
+            const xxCell = chartData.layers[0].cells[meta.xiaoXianIndex];
+            metaPanel.appendChild(_createElement('div', 'meta-line',
+                `小限：${xxCell.branch}${xxCell.palaceName}（虛歲 ${meta.xiaoXianNominalAge}）`));
+        }
+        // 祿隨忌走 chain: where the natal blessing gets committed, hop by hop
+        const lsj = chartData.flying.luSuiJi;
+        if (lsj && lsj.steps.length > 0) {
+            const cells0 = chartData.layers[0].cells;
+            const at = (i) => `${cells0[i].palaceName}(${cells0[i].branch})`;
+            const chain = lsj.steps.map(s => `忌(${s.star})→${at(s.to)}`).join(' ');
+            metaPanel.appendChild(_createElement('div', 'meta-line',
+                `祿隨忌走：${lsj.luStar}祿坐${at(lsj.startIndex)} ${chain}${lsj.cycle ? '（回環）' : ''}`));
         }
 
         // If a branch was pinned before rebuild, re-apply the highlight and update info panel
@@ -428,13 +457,14 @@ function updateInfoPanel(branchIndex) {
     // 釋義: knowledge-base interpretations for this palace, with provenance badges
     const kbHits = kbPerPalace ? (kbPerPalace[branchIndex] || []) : [];
     if (kbHits.length > 0) {
-        infoPanel.appendChild(_createElement('div', 'kb-title', '釋義'));
-        kbHits.slice(0, 6).forEach(entry => {
+        const sec = _collapsibleSection(`釋義（${kbHits.length}）`, true);
+        kbHits.slice(0, 8).forEach(entry => {
             const row = _createElement('div', 'kb-entry');
             row.appendChild(_createElement('span', ['kb-source', `kb-src-${entry.source === '古籍' ? 'classic' : entry.source === '現代通行' ? 'modern' : 'ai'}`], entry.source));
             row.appendChild(document.createTextNode(entry.text));
-            infoPanel.appendChild(row);
+            sec.appendChild(row);
         });
+        infoPanel.appendChild(sec);
     }
 }
 

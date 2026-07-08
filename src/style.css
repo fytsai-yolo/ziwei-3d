@@ -750,6 +750,13 @@ form button[type="submit"] {
 .final-read p { margin: 6px 0; }
 .final-read .fr-cite { color: var(--color-text-dim); font-size: 11px; }
 
+/* Collapsible info-panel sections */
+.panel-sec { margin-top: 8px; }
+.panel-sec > summary { cursor: pointer; user-select: none; list-style: none; }
+.panel-sec > summary::before { content: '▸ '; font-size: 10px; }
+.panel-sec[open] > summary::before { content: '▾ '; }
+.panel-sec > summary::-webkit-details-marker { display: none; }
+
 .center-row {
     display: flex;
     flex-wrap: wrap;
