@@ -86,9 +86,9 @@ function formatDateTime(dateTimeString) {
 
 /** Sets default values for the chart input form. */
 function setDefaultFormValues() {
-    document.getElementById('birth-date').value = '2000-08-16';
-    document.getElementById('time-index').value = '2';
-    document.getElementById('gender').value = '女';
+    document.getElementById('birth-date').value = '1995-11-17';
+    document.getElementById('time-index').value = '7';
+    document.getElementById('gender').value = '男';
 
     // Set target-date to current datetime
     const now = new Date();
