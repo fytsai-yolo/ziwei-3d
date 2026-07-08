@@ -96,6 +96,26 @@ ok('SFSZ-tier flags never escalate severity even with a bonus co-star', () => {
   assert.match(shaHit.label, /含身宮/);
 });
 
+ok('relatedIndex: oppose/sfsz flags point at the 命宮 they hit; direct/converge flags carry null', () => {
+  // Direct-hit and converge events are single-palace: relatedIndex must be null.
+  const direct = byYear(2007).overlap.find((h) => h.id === 'direct-decadal-into-year');
+  assert.equal(direct.relatedIndex, null);
+  const acute = byYear(1999).overlap.find((h) => h.id === 'acute-converge');
+  assert.equal(acute.relatedIndex, null);
+  // sfsz events link the acting palace to the 命宮 whose 三方 it enters.
+  const sha2001 = byYear(2001).overlap.find((h) => h.id === 'sfsz-decadal-sha-in-year');
+  assert.equal(sha2001.relatedIndex, byYear(2001).flowLifeIndex);
+  // Every oppose flag in the 80-year run must satisfy: palaceIndex is opposite its relatedIndex.
+  for (const entry of tl.years) {
+    for (const h of entry.overlap) {
+      if (h.id.startsWith('oppose-')) {
+        assert.equal((h.palaceIndex + 6) % 12, h.relatedIndex, `${entry.year} ${h.id}`);
+      }
+      assert.ok('relatedIndex' in h, `${entry.year} ${h.id} missing relatedIndex`);
+    }
+  }
+});
+
 ok('overlap flags feed into score via SEVERITY_WEIGHTS (ovlp2 = -2)', () => {
   // 2007 also carries the pre-existing 'lu-in-flow-life' (+1) rule, netting the score to -1 —
   // confirm the overlap flag itself is present with the right severity rather than asserting

@@ -65,6 +65,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
       label: `流年忌(${yearJiStarName})疊${sources.join('+')}忌 於 ${natalCells[yearJi].palaceName}`,
       severity: isDouble ? 'ovlp2' : 'ovlp1',
       palaceIndex: yearJi,
+      relatedIndex: null,
       hasBonus: false
     });
   }
@@ -76,6 +77,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
       label: `流年忌入大限命宮(${natalCells[decadalLifeIndex].palaceName})`,
       severity: 'ovlp2',
       palaceIndex: decadalLifeIndex,
+      relatedIndex: null,
       hasBonus: false
     });
   }
@@ -87,6 +89,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
       label: `大限忌入流年命宮(${natalCells[flowLifeIndex].palaceName})`,
       severity: 'ovlp2',
       palaceIndex: flowLifeIndex,
+      relatedIndex: null,
       hasBonus: false
     });
   }
@@ -100,6 +103,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
         label: `流年忌入大限三方(${natalCells[yearJi].palaceName})`,
         severity: 'ovlp0',
         palaceIndex: yearJi,
+        relatedIndex: decadalLifeIndex,
         hasBonus: false
       });
     }
@@ -114,6 +118,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
         label: `流年擎羊入大限三方(${natalCells[yearSha.qingYangIndex].palaceName})`,
         severity: 'ovlp0',
         palaceIndex: yearSha.qingYangIndex,
+        relatedIndex: decadalLifeIndex,
         hasBonus: false
       });
     }
@@ -123,6 +128,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
         label: `流年陀羅入大限三方(${natalCells[yearSha.tuoLuoIndex].palaceName})`,
         severity: 'ovlp0',
         palaceIndex: yearSha.tuoLuoIndex,
+        relatedIndex: decadalLifeIndex,
         hasBonus: false
       });
     }
@@ -137,6 +143,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
         label: `大限忌入流年三方(${natalCells[decadalJi].palaceName})`,
         severity: 'ovlp0',
         palaceIndex: decadalJi,
+        relatedIndex: flowLifeIndex,
         hasBonus: false
       });
     }
@@ -151,6 +158,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
         label: `運擎羊入流年三方(${natalCells[decadalSha.qingYangIndex].palaceName})`,
         severity: 'ovlp0',
         palaceIndex: decadalSha.qingYangIndex,
+        relatedIndex: flowLifeIndex,
         hasBonus: false
       });
     }
@@ -160,6 +168,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
         label: `運陀羅入流年三方(${natalCells[decadalSha.tuoLuoIndex].palaceName})`,
         severity: 'ovlp0',
         palaceIndex: decadalSha.tuoLuoIndex,
+        relatedIndex: flowLifeIndex,
         hasBonus: false
       });
     }
@@ -172,6 +181,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
       label: `流年忌沖大限命宮`,
       severity: 'ovlp1',
       palaceIndex: yearJi,
+      relatedIndex: decadalLifeIndex,
       hasBonus: false
     });
   }
@@ -183,6 +193,7 @@ export function evaluateOverlap({ birthStem, decadalStem, decadalLifeIndex, year
       label: `大限忌沖流年命宮`,
       severity: 'ovlp1',
       palaceIndex: decadalJi,
+      relatedIndex: flowLifeIndex,
       hasBonus: false
     });
   }

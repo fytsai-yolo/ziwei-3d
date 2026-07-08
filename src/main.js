@@ -19,6 +19,7 @@ let timelineKey = null; // birth inputs the current timeline was built for
 let currentTimeline = null; // buildTimeline() result for the current chart
 let viewMode = 'flat'; // 'flat' (merged 2D 疊宮盤, default) | '3d' (exploded stack)
 let mergedOverlay = null; // fly-arrow overlay attached to the merged chart
+let mergedLinkOverlay = null; // separate overlay for 疊宮 hover links (so hover doesn't wipe pinned arrows)
 let kbPerPalace = null; // matchPalaceKnowledge result for the current chart
 const infoPanel = document.getElementById('info-panel');
 const metaPanel = document.getElementById('meta');
@@ -138,11 +139,14 @@ function rebuildMergedChart() {
     const flatView = document.getElementById('flat-view');
     flatView.replaceChildren();
     mergedOverlay = null;
+    mergedLinkOverlay = null;
     if (!chartData) return;
     const mergedEl = renderMergedChart(chartData, { overlapHits: currentYearOverlapHits() });
     const grids = chartData.layers[0].cells.map(c => c.grid);
     mergedOverlay = createFlyOverlay(grids);
     mergedEl.appendChild(mergedOverlay.el);
+    mergedLinkOverlay = createFlyOverlay(grids);
+    mergedEl.appendChild(mergedLinkOverlay.el);
     flatView.appendChild(mergedEl);
 }
 
@@ -248,7 +252,19 @@ function updateYearPanel(year) {
     if (entry.flags.length > 0) {
         const flagsRow = _createElement('div', 'year-flags');
         entry.flags.forEach(f => {
-            flagsRow.appendChild(_createElement('span', ['yflag', `yflag-${f.severity}`], f.label));
+            const span = _createElement('span', ['yflag', `yflag-${f.severity}`], f.label);
+            // 疊宮 flags carry palace geometry (matched from entry.overlap by label) so
+            // hovering them lights up the event's palaces in whichever view is active.
+            const hit = (entry.overlap || []).find(h => h.label === f.label);
+            if (hit) {
+                span.setAttribute('data-ovlp-palace', hit.palaceIndex.toString());
+                span.setAttribute('data-ovlp-severity', hit.severity);
+                if (hit.relatedIndex !== null && hit.relatedIndex !== undefined) {
+                    span.setAttribute('data-ovlp-related', hit.relatedIndex.toString());
+                    span.setAttribute('data-ovlp-link', hit.id.startsWith('oppose') ? '沖' : '入');
+                }
+            }
+            flagsRow.appendChild(span);
         });
         panel.appendChild(flagsRow);
     }
@@ -266,6 +282,48 @@ function updateYearPanel(year) {
         personal.appendChild(document.createTextNode(note));
         panel.appendChild(personal);
     }
+}
+
+/** Glows a 疊宮 event's palaces in BOTH the merged chart and the 3D stack. */
+function setOverlapHighlight(palaceIndex, relatedIndex, severity, on, linkLabel = '沖') {
+    const tier = (severity || 'ovlp1').replace('ovlp', '');
+    const mark = (index, cls) => {
+        document.querySelectorAll(
+            `#flat-view .palace[data-branch-index="${index}"], #viewport .stack .palace[data-branch-index="${index}"]`
+        ).forEach(el => el.classList.toggle(cls, on));
+    };
+    mark(palaceIndex, `ovlp-hl-${tier}`);
+    if (relatedIndex !== null) mark(relatedIndex, 'ovlp-hl-rel');
+    // 沖/三方 events get a dashed 忌-colored link from the acting palace to the 命宮 it hits
+    if (relatedIndex !== null && mergedLinkOverlay) {
+        if (on) mergedLinkOverlay.drawLink(palaceIndex, relatedIndex, { key: '忌', label: linkLabel });
+        else mergedLinkOverlay.clear();
+    }
+}
+
+/** Reads data-ovlp-* attributes off a hovered chip/flag; null if not an overlap element. */
+function overlapDataFrom(el) {
+    if (!el || !el.hasAttribute('data-ovlp-palace')) return null;
+    const rel = el.getAttribute('data-ovlp-related');
+    return {
+        palaceIndex: parseInt(el.getAttribute('data-ovlp-palace'), 10),
+        relatedIndex: rel === null ? null : parseInt(rel, 10),
+        severity: el.getAttribute('data-ovlp-severity'),
+        linkLabel: el.getAttribute('data-ovlp-link') || '沖',
+    };
+}
+
+/** Delegated hover: 疊 chips in the merged chart + 疊宮 flags in the year panel. */
+function bindOverlapHover(containerId) {
+    const container = document.getElementById(containerId);
+    container.addEventListener('mouseover', (e) => {
+        const d = overlapDataFrom(e.target.closest('[data-ovlp-palace]'));
+        if (d) setOverlapHighlight(d.palaceIndex, d.relatedIndex, d.severity, true, d.linkLabel);
+    });
+    container.addEventListener('mouseout', (e) => {
+        const d = overlapDataFrom(e.target.closest('[data-ovlp-palace]'));
+        if (d) setOverlapHighlight(d.palaceIndex, d.relatedIndex, d.severity, false, d.linkLabel);
+    });
 }
 
 /** Re-applies the current fly-mode visuals (after rebuild or mode switch). */
@@ -514,6 +572,10 @@ document.addEventListener('DOMContentLoaded', () => {
             applyFlyMode();
         }
     });
+
+    // Hovering a 疊宮 chip/flag highlights the event's palaces in both views
+    bindOverlapHover('flat-view');
+    bindOverlapHover('year-panel');
 
     // Flat ↔ 3D view toggle
     document.getElementById('view-toggle').addEventListener('click', () => {

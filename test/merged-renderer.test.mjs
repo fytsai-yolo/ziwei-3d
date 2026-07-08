@@ -75,6 +75,10 @@ ok('疊宮 overlap chips appear on their palaces with tooltips, ovlp0 excluded',
   // ovlp0-tier hits must not create chips anywhere
   const allChips = [...el.querySelectorAll('.ovlp-chip')];
   assert.ok(allChips.every(c => !c.classList.contains('ovlp0')));
+  // Hover-highlight wiring: every chip carries its palace geometry as data attributes
+  assert.equal(chip.getAttribute('data-ovlp-palace'), '11');
+  assert.ok(chip.getAttribute('data-ovlp-severity').startsWith('ovlp'));
+  allChips.forEach(c => assert.ok(c.hasAttribute('data-ovlp-palace')));
 });
 
 ok('center: 疊宮 label + one 四化 row per layer', () => {

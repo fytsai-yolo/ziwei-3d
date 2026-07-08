@@ -302,6 +302,52 @@ export function createFlyOverlay(gridPositions, options = {}) {
     }
 
     /**
+     * Draws a straight dashed link between two palaces (used for 疊宮 沖 events).
+     * @param {number} fromIndex - branchIndex of the acting palace (e.g. where the 忌 sits).
+     * @param {number} toIndex - branchIndex of the palace being hit (e.g. the 沖-ed 命宮).
+     * @param {Object} [opts] - { key: mutagen key for color/marker (default '忌'), label }.
+     */
+    function drawLink(fromIndex, toIndex, opts = {}) {
+        const key = opts.key || '忌';
+        const color = KEY_COLORS[key];
+        const A = getCenterOf(fromIndex);
+        const B = getCenterOf(toIndex);
+        // Shorten both ends so the line doesn't sit under palace text
+        const dir = pointNormalize(pointSubtract(B, A));
+        const start = pointAdd(A, pointScale(dir, 16));
+        const end = pointSubtract(B, pointScale(dir, 16));
+
+        const pathEl = createSvgElement('path', {
+            d: `M ${start.x},${start.y} L ${end.x},${end.y}`,
+            stroke: color,
+            'stroke-width': 2.5,
+            'stroke-dasharray': '7 5',
+            fill: 'none',
+            opacity: 0.9,
+            'stroke-linecap': 'round',
+            'marker-end': markerUrls[key],
+        });
+        flyMarksGroup.appendChild(pathEl);
+
+        if (opts.label) {
+            const mid = createPoint((start.x + end.x) / 2, (start.y + end.y) / 2);
+            const textEl = createSvgElement('text', {
+                x: mid.x,
+                y: mid.y - 6,
+                'font-size': 14,
+                'text-anchor': 'middle',
+                fill: color,
+                stroke: '#0a1024',
+                'stroke-width': 3,
+                'paint-order': 'stroke',
+                'font-weight': 'bold',
+            });
+            textEl.textContent = opts.label;
+            flyMarksGroup.appendChild(textEl);
+        }
+    }
+
+    /**
      * Clears all drawn arrows and labels from the overlay.
      */
     function clear() {
@@ -315,6 +361,7 @@ export function createFlyOverlay(gridPositions, options = {}) {
         el,
         drawPalaceFlights,
         drawCenterFlights,
+        drawLink,
         clear,
     };
 }

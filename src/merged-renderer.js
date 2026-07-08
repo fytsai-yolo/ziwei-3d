@@ -170,6 +170,13 @@ export function renderMergedChart(chart, opts = {}) {
       if (entry.palaceIndex === cell.branchIndex && entry.severity !== 'ovlp0') {
         const chip = el('span', `ovlp-chip ${entry.severity}`, '疊');
         chip.setAttribute('title', entry.label || '');
+        // Hover-highlight wiring: main.js reads these to glow the event's palaces
+        chip.setAttribute('data-ovlp-palace', entry.palaceIndex.toString());
+        chip.setAttribute('data-ovlp-severity', entry.severity);
+        if (entry.relatedIndex !== null && entry.relatedIndex !== undefined) {
+          chip.setAttribute('data-ovlp-related', entry.relatedIndex.toString());
+          chip.setAttribute('data-ovlp-link', entry.id.startsWith('oppose') ? '沖' : '入');
+        }
         overlayStrip.appendChild(chip);
       }
     });
