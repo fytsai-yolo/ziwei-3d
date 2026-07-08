@@ -7,6 +7,8 @@ import { renderTimeline } from './timeline-ui.js';
 import { getNotesForChart } from './notes-data.js';
 import { buildReportHTML } from './report.js';
 import { renderMergedChart } from './merged-renderer.js';
+import { matchPalaceKnowledge, composeYearText } from './kb-engine.js';
+import { KB_ENTRIES, YEAR_TEMPLATES } from './kb/index.js';
 
 let scene;
 let chartData = null; // Stores the latest chart data
@@ -17,6 +19,7 @@ let timelineKey = null; // birth inputs the current timeline was built for
 let currentTimeline = null; // buildTimeline() result for the current chart
 let viewMode = 'flat'; // 'flat' (merged 2D 疊宮盤, default) | '3d' (exploded stack)
 let mergedOverlay = null; // fly-arrow overlay attached to the merged chart
+let kbPerPalace = null; // matchPalaceKnowledge result for the current chart
 const infoPanel = document.getElementById('info-panel');
 const metaPanel = document.getElementById('meta');
 
@@ -249,10 +252,19 @@ function updateYearPanel(year) {
         });
         panel.appendChild(flagsRow);
     }
+    // Rule-composed year text (works for any chart) …
+    const composed = composeYearText(entry, YEAR_TEMPLATES);
+    if (composed !== '平') {
+        panel.appendChild(_createElement('div', 'year-note', composed));
+    }
+    // … plus the hand-written note, clearly labeled, only for the curated chart
     const notes = getNotesForChart(chartData.meta);
     const note = notes && notes.years[year];
     if (note) {
-        panel.appendChild(_createElement('div', 'year-note', note));
+        const personal = _createElement('div', ['year-note', 'personal']);
+        personal.appendChild(_createElement('span', ['kb-source', 'kb-src-personal'], '個人解讀'));
+        personal.appendChild(document.createTextNode(note));
+        panel.appendChild(personal);
     }
 }
 
@@ -280,6 +292,7 @@ function rebuild() {
 
     try {
         chartData = buildChartData({ solarDate, timeIndex, gender, targetDate });
+        kbPerPalace = matchPalaceKnowledge(chartData, KB_ENTRIES);
 
         // Render layers and pass to scene (natal layer is at index 0, so it's bottom).
         // 大限/流年 layers render compact in 3D — their detail lives in the merged 2D view.
@@ -414,6 +427,18 @@ function updateInfoPanel(branchIndex) {
         infoRow.appendChild(infoStars);
         infoPanel.appendChild(infoRow);
     });
+
+    // 釋義: knowledge-base interpretations for this palace, with provenance badges
+    const kbHits = kbPerPalace ? (kbPerPalace[branchIndex] || []) : [];
+    if (kbHits.length > 0) {
+        infoPanel.appendChild(_createElement('div', 'kb-title', '釋義'));
+        kbHits.slice(0, 6).forEach(entry => {
+            const row = _createElement('div', 'kb-entry');
+            row.appendChild(_createElement('span', ['kb-source', `kb-src-${entry.source === '古籍' ? 'classic' : entry.source === '現代通行' ? 'modern' : 'ai'}`], entry.source));
+            row.appendChild(document.createTextNode(entry.text));
+            infoPanel.appendChild(row);
+        });
+    }
 }
 
 // Initialize the app when the DOM is fully loaded

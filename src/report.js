@@ -1,4 +1,7 @@
-export const DISCLAIMER = '本報告由程式依紫微斗數傳統命理規則自動生成，所有宮位解讀、格局判定與流年吉凶提示均屬傳統術數之推演，僅供學術研究與娛樂參考使用，不構成任何醫療、投資、法律或人生重大決策之依據。健康問題請以正規醫療檢查為準，財務決策請諮詢持牌專業人士。';
+import { matchPalaceKnowledge, matchPatternKnowledge, composeYearText } from './kb-engine.js';
+import { KB_ENTRIES, YEAR_TEMPLATES } from './kb/index.js';
+
+export const DISCLAIMER ='本報告由程式依紫微斗數傳統命理規則自動生成，所有宮位解讀、格局判定與流年吉凶提示均屬傳統術數之推演，僅供學術研究與娛樂參考使用，不構成任何醫療、投資、法律或人生重大決策之依據。健康問題請以正規醫療檢查為準，財務決策請諮詢持牌專業人士。';
 
 export function esc(s) {
   if (s === undefined || s === null) return '';
@@ -55,8 +58,10 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
   }
   metaTableHtml += '</table>';
 
-  // B. Patterns
+  // B. Patterns — enriched with knowledge-base texts (source-labeled)
   const patterns = chart.patterns || [];
+  const kbPatternHits = matchPatternKnowledge(chart, KB_ENTRIES);
+  const kbPatternById = new Map(kbPatternHits.map(h => [h.entry.match.patternId, h.entry]));
   let patternsHtml = '<h2>格局</h2>';
   if (patterns.length === 0) {
     patternsHtml += '<p>無明顯成格。</p>';
@@ -67,7 +72,13 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
         const c = cellMap[idx];
         return c ? c.palaceName : '';
       }).filter(Boolean).join('、');
-      patternsHtml += `<li><b>${esc(p.name)}</b>：${esc(p.note)}（${esc(palNames)}）</li>`;
+      let line = `<li><b>${esc(p.name)}</b>：${esc(p.note)}（${esc(palNames)}）`;
+      const kbEntry = kbPatternById.get(p.id);
+      if (kbEntry) {
+        line += `<br><span class="kb-text">${esc(kbEntry.text)}<span class="kb-src">〔${esc(kbEntry.source)}〕</span></span>`;
+      }
+      line += '</li>';
+      patternsHtml += line;
     });
     patternsHtml += '</ul>';
   }
@@ -124,6 +135,26 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
     cellsTableHtml += '</tr>';
   });
   cellsTableHtml += '</tbody></table>';
+
+  // C2. 宮位釋義 — knowledge-base interpretations per palace, source-labeled (any chart)
+  const kbPerPalace = matchPalaceKnowledge(chart, KB_ENTRIES);
+  let kbHtml = '<h2>宮位釋義</h2>';
+  const kbSections = [];
+  sortedCells.forEach(cell => {
+    const hits = kbPerPalace[cell.branchIndex] || [];
+    if (hits.length === 0) return;
+    let block = `<h3>${esc(cell.stem)}${esc(cell.branch)} ${esc(cell.palaceName)}</h3><ul>`;
+    hits.forEach(entry => {
+      block += `<li>${esc(entry.text)}<span class="kb-src">〔${esc(entry.source)}〕</span></li>`;
+    });
+    block += '</ul>';
+    kbSections.push(block);
+  });
+  if (kbSections.length === 0) {
+    kbHtml += '<p>本命盤主星分佈無對應釋義條目。</p>';
+  } else {
+    kbHtml += kbSections.join('');
+  }
 
   // D. Four Mutagen Confluences
   const confluenceLines = [];
@@ -210,7 +241,8 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
 
       const flowCell = cellMap[item.flowLifeIndex];
       const flowLifeStr = flowCell ? `${flowCell.branch || ''}${flowCell.palaceName || ''}` : '—';
-      const flagsStr = (item.flags || []).map(f => f.label).join('、') || '—';
+      // 提示: rule-composed from flag templates (chart-agnostic); 備註: personal notes only
+      const flagsStr = composeYearText(item, YEAR_TEMPLATES);
       const noteText = (notes && notes.years && notes.years[item.year]) ? notes.years[item.year] : '';
 
       let rowClass = '';
@@ -322,6 +354,8 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
     li {
       margin-bottom: 8px;
     }
+    .kb-text { color: #444; font-size: 13px; }
+    .kb-src { color: #999; font-size: 11px; margin-left: 4px; }
     footer {
       margin-top: 3em;
       padding-top: 1.5em;
@@ -344,6 +378,7 @@ export function buildReportHTML({ chart, timeline, notes, generatedAt }) {
 
   ${patternsHtml}
   ${cellsTableHtml}
+  ${kbHtml}
   ${confluenceHtml}
   ${overlapHtml}
   ${timelineHtml}

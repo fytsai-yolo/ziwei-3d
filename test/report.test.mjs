@@ -29,7 +29,7 @@ const html = buildReportHTML({ chart, timeline, notes, generatedAt: '2026-07-08 
 
 ok('report contains all sections and key content', () => {
   assert.ok(html.startsWith('<!DOCTYPE html>'));
-  for (const s of ['紫微斗數命盤研究報告', '格局', '命盤十二宮', '四化匯聚', '疊宮大事記', '流年提要', '分域綜述']) {
+  for (const s of ['紫微斗數命盤研究報告', '格局', '命盤十二宮', '宮位釋義', '四化匯聚', '疊宮大事記', '流年提要', '分域綜述']) {
     assert.ok(html.includes(s), `missing section ${s}`);
   }
   assert.ok(html.includes('陽梁昌祿格'));
@@ -50,6 +50,10 @@ ok('disclaimer always present, with and without notes', () => {
   assert.ok(bare.includes(DISCLAIMER));
   assert.ok(!bare.includes('分域綜述'), 'domains section must be omitted without notes');
   assert.ok(!bare.includes('三忌匯流命'), 'curated year notes must be omitted without notes');
+  // KB-derived content works WITHOUT personal notes (chart-agnostic):
+  assert.ok(bare.includes('宮位釋義'));
+  assert.ok(bare.includes('〔現代通行〕')); // source label rendered
+  assert.ok(bare.includes('凡事宜守成防損')); // composed year template phrase (乙年)
 });
 
 ok('dynamic content is HTML-escaped', () => {
