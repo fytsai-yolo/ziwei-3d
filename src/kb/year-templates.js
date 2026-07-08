@@ -13,5 +13,6 @@ export const YEAR_TEMPLATES = {
   'lu-in-flow-life': '流年祿入流年命宮，運勢看漲多有契機',
   'hongluan': '紅鸞坐守流年命宮，姻緣桃花喜事臨門',
   'tianxi': '天喜坐守流年命宮，喜慶臨門多添祥瑞',
-  'stack-decadal-life': '流年命宮疊大限命宮，面臨階段重要轉折'
+  'stack-decadal-life': '流年命宮疊大限命宮，面臨階段重要轉折',
+  'kuiyue-in-flow-life': '流年魁鉞坐命，貴人相扶，宜主動求助合作'
 };

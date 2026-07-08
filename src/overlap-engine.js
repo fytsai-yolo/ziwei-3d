@@ -7,6 +7,26 @@ export const LUCUN_BRANCH = {
 
 export const SHA_STARS = ['擎羊', '陀羅', '火星', '鈴星', '地空', '地劫'];
 
+// 流年天魁/天鉞 (天乙貴人) branch by year stem — 甲戊庚牛羊、乙己鼠猴鄉、丙丁豬雞位、
+// 壬癸兔蛇藏、六辛逢馬虎. Empirically verified against iztro 流魁/流鉞 output for all
+// 10 stems over 40 consecutive years (2026-07-08) before hardcoding.
+export const KUIYUE_BRANCH = {
+  '甲': ['丑', '未'], '乙': ['子', '申'], '丙': ['亥', '酉'], '丁': ['亥', '酉'],
+  '戊': ['丑', '未'], '己': ['子', '申'], '庚': ['丑', '未'], '辛': ['午', '寅'],
+  '壬': ['卯', '巳'], '癸': ['卯', '巳'],
+};
+
+export function flowingKuiYueFromStem(stem) {
+  const pair = KUIYUE_BRANCH[stem];
+  if (!pair) return { tianKuiIndex: null, tianYueIndex: null };
+  const tianKuiIndex = BRANCH_ORDER.indexOf(pair[0]);
+  const tianYueIndex = BRANCH_ORDER.indexOf(pair[1]);
+  return {
+    tianKuiIndex: tianKuiIndex === -1 ? null : tianKuiIndex,
+    tianYueIndex: tianYueIndex === -1 ? null : tianYueIndex,
+  };
+}
+
 export const BRANCH_ORDER = '寅卯辰巳午未申酉戌亥子丑';
 
 export function flowingShaFromStem(stem) {

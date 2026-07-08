@@ -1,5 +1,5 @@
 import { STEM_MUTAGEN } from './fly-engine.js';
-import { evaluateOverlap } from './overlap-engine.js';
+import { evaluateOverlap, flowingKuiYueFromStem } from './overlap-engine.js';
 
 const STEMS = '甲乙丙丁戊己庚辛壬癸';
 const BRANCHES = '子丑寅卯辰巳午未申酉戌亥';
@@ -163,6 +163,13 @@ export function buildTimeline(chart) {
     // 11. 流命疊大限命 (Flowing Life overlaps Decadal Life)
     if (decadal !== null && flowLifeIndex !== null && flowLifeIndex === decadal.palaceIndex) {
       addFlag('stack-decadal-life', '流命疊大限命', 'note');
+    }
+    // 12. 流魁鉞坐流命 (flowing 天魁/天鉞 in the Flowing Life Palace — 貴人年).
+    // KUIYUE_BRANCH is the classical 天乙貴人 table, empirically verified against iztro.
+    const kuiYue = flowingKuiYueFromStem(stem);
+    if (flowLifeIndex !== null
+        && (flowLifeIndex === kuiYue.tianKuiIndex || flowLifeIndex === kuiYue.tianYueIndex)) {
+      addFlag('kuiyue-in-flow-life', '流魁鉞坐流命', 'good1');
     }
 
     // 疊宮 multi-layer (生年/大限/流年) 四化 convergence — see src/overlap-engine.js

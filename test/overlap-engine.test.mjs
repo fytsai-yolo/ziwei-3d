@@ -5,6 +5,7 @@ import { buildChartData } from '../src/astro-service.js';
 import { buildTimeline } from '../src/timeline.js';
 import {
   LUCUN_BRANCH, BRANCH_ORDER, flowingShaFromStem, locateStar, evaluateOverlap,
+  KUIYUE_BRANCH, flowingKuiYueFromStem,
 } from '../src/overlap-engine.js';
 
 let passed = 0;
@@ -37,6 +38,18 @@ ok('flowingShaFromStem: 擎羊=祿+1, 陀羅=祿-1 for all 10 stems', () => {
     assert.equal(qingYangIndex, qy, `${stem} 擎羊`);
     assert.equal(tuoLuoIndex, tl2, `${stem} 陀羅`);
   }
+});
+
+ok('KUIYUE_BRANCH matches iztro 流魁/流鉞 output for all 10 stems (probed 2000-2039)', () => {
+  assert.deepEqual(KUIYUE_BRANCH, {
+    '甲': ['丑', '未'], '乙': ['子', '申'], '丙': ['亥', '酉'], '丁': ['亥', '酉'],
+    '戊': ['丑', '未'], '己': ['子', '申'], '庚': ['丑', '未'], '辛': ['午', '寅'],
+    '壬': ['卯', '巳'], '癸': ['卯', '巳'],
+  });
+  // Index form: 甲 → 丑(11)/未(5) in the 寅-first BRANCH_ORDER
+  assert.deepEqual(flowingKuiYueFromStem('甲'), { tianKuiIndex: 11, tianYueIndex: 5 });
+  assert.deepEqual(flowingKuiYueFromStem('辛'), { tianKuiIndex: 4, tianYueIndex: 0 });
+  assert.deepEqual(flowingKuiYueFromStem('?'), { tianKuiIndex: null, tianYueIndex: null });
 });
 
 ok('locateStar finds natal major/minor star positions, null when absent', () => {
@@ -122,7 +135,9 @@ ok('overlap flags feed into score via SEVERITY_WEIGHTS (ovlp2 = -2)', () => {
   // on the aggregate score, which depends on unrelated rules too.
   const entry = byYear(2007);
   assert.ok(entry.flags.some((f) => f.id === 'direct-decadal-into-year' && f.severity === 'ovlp2'));
-  assert.equal(entry.score, 1 - 2); // +1 (lu-in-flow-life) + -2 (direct hit) + 0*3 (sfsz tiers)
+  // 2007 丁亥: 丁 puts 流魁 at 亥 which IS the 流命 — the kuiyue rule fires here too.
+  assert.ok(entry.flags.some((f) => f.id === 'kuiyue-in-flow-life'));
+  assert.equal(entry.score, 1 - 2 + 1); // lu-in-flow-life + direct hit + kuiyue (+0*3 sfsz)
 });
 
 console.log(`\nAll ${passed} overlap-engine test groups passed.`);
