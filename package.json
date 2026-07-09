@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "smoke": "npm run build && node test/smoke.browser.mjs",
     "test": "node test/astro-service.test.mjs && node test/fly-engine.test.mjs && node test/overlap-engine.test.mjs && node test/timeline.test.mjs && node test/kb-engine.test.mjs && node test/fly-reader.test.mjs && node test/report.test.mjs && node test/merged-renderer.test.mjs && node test/arrows.test.mjs"
   },
   "keywords": [],
@@ -17,6 +18,7 @@
   },
   "devDependencies": {
     "jsdom": "^29.1.1",
+    "playwright": "^1.61.1",
     "vite": "^8.1.3"
   }
 }
