@@ -120,17 +120,21 @@ export function buildTimeline(chart) {
 
     // --- Apply rules in the specified order ---
 
+    // Calibration note (2026-07-09, graded against the reference chart's real
+    // 2019-2026): the three 忌-stacking rules are chronic echoes of a natal fact, not
+    // acute events — at bad2 they over-scored two known-smooth years, so they carry
+    // bad1; acute severity comes from the overlap engine's direct/converge hits.
     // 1. 年忌疊生年忌 (Annual Ji stacks with Natal Ji)
     if (yearJiStarName === birthJiStar) {
-      addFlag('ji-stack-birth', '年忌疊生年忌', 'bad2');
+      addFlag('ji-stack-birth', '年忌疊生年忌', 'bad1');
     }
     // 2. 年忌入生年忌宮 (Annual Ji enters Natal Ji Palace)
     else if (yearJiStarName !== birthJiStar && jiIdx !== null && jiIdx === birthJiIndex) {
-      addFlag('ji-into-birth-ji', '年忌入生年忌宮', 'bad2');
+      addFlag('ji-into-birth-ji', '年忌入生年忌宮', 'bad1');
     }
     // 3. 年忌疊自化忌 (Annual Ji stacks with Self-Mutating Ji)
     if (jiIdx !== null && cells[jiIdx].selfHits && cells[jiIdx].selfHits.some(h => h.key === '忌')) {
-      addFlag('ji-stack-self', '年忌疊自化忌', 'bad2');
+      addFlag('ji-stack-self', '年忌疊自化忌', 'bad1');
     }
     // 4. 年忌入流命 (Annual Ji enters Flowing Life Palace)
     if (jiIdx === flowLifeIndex) {
@@ -144,9 +148,11 @@ export function buildTimeline(chart) {
     if (jiIdx === chart.meta.bodyPalaceIndex) {
       addFlag('ji-in-body', '年忌入身宮', 'bad1');
     }
-    // 7. 年祿入命宮 (Annual Lu enters Natal Life Palace)
+    // 7. 年祿入命宮 (Annual Lu enters Natal Life Palace) — informational: a background
+    // echo of the natal palace, not a year-event (calibration: fired in two graded-bad
+    // years, never in a confirmed-good one).
     if (luIdx === natal.lifeIndex) {
-      addFlag('lu-in-natal-life', '年祿入命宮', 'good1');
+      addFlag('lu-in-natal-life', '年祿入命宮', 'note');
     }
     // 8. 年祿入流命 (Annual Lu enters Flowing Life Palace)
     if (luIdx === flowLifeIndex) {
@@ -166,10 +172,12 @@ export function buildTimeline(chart) {
     }
     // 12. 流魁鉞坐流命 (flowing 天魁/天鉞 in the Flowing Life Palace — 貴人年).
     // KUIYUE_BRANCH is the classical 天乙貴人 table, empirically verified against iztro.
+    // Informational: 貴人 presence is an opportunity, not fortune — calibration found it
+    // flipping a graded-bad year to 吉, so it no longer moves the score.
     const kuiYue = flowingKuiYueFromStem(stem);
     if (flowLifeIndex !== null
         && (flowLifeIndex === kuiYue.tianKuiIndex || flowLifeIndex === kuiYue.tianYueIndex)) {
-      addFlag('kuiyue-in-flow-life', '流魁鉞坐流命', 'good1');
+      addFlag('kuiyue-in-flow-life', '流魁鉞坐流命', 'note');
     }
 
     // 疊宮 multi-layer (生年/大限/流年) 四化 convergence — see src/overlap-engine.js

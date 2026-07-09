@@ -46,7 +46,8 @@ ok('2019 己亥: 疊宮 engine independently confirms this as a headline compoun
     'sfsz-year-sha-in-decadal', 'sfsz-year-sha-in-decadal',
     'sfsz-decadal-sha-in-year', 'sfsz-decadal-sha-in-year',
   ].sort());
-  assert.equal(byYear(2019).score, -6); // -2 -1 -1 -2 + 0*4
+  // Calibrated weights (2026-07-09): stack rules bad2->bad1, so -1 -1 -1 -2 + 0*4
+  assert.equal(byYear(2019).score, -5);
 });
 
 ok('2025 乙巳: 年忌疊生年忌 + 沖流命, but 天機年祿坐流命 (mixed year, from the original 11-rule set alone)', () => {
@@ -60,12 +61,12 @@ ok('2025 乙巳: 疊宮 engine adds its own convergence + opposition signals', (
     'acute-converge', 'oppose-decadal-chong-year',
     'sfsz-decadal-ji-in-year', 'sfsz-decadal-sha-in-year',
   ].sort());
-  assert.equal(byYear(2025).score, -4); // -2 -1 +1 -1 -1 + 0*2
+  assert.equal(byYear(2025).score, -3); // -1(calibrated stack) -1 +1 -1 -1 + 0*2
 });
 
-ok('2026 丙午: 年忌疊自化忌 (廉貞, score -2)', () => {
+ok('2026 丙午: 年忌疊自化忌 (廉貞, calibrated to bad1)', () => {
   assert.deepEqual(flagIds(2026), ['ji-stack-self']);
-  assert.equal(byYear(2026).score, -2);
+  assert.equal(byYear(2026).score, -1);
 });
 
 ok('戊 years: 年忌入身宮 (天機忌入巳)', () => {

@@ -135,9 +135,10 @@ ok('overlap flags feed into score via SEVERITY_WEIGHTS (ovlp2 = -2)', () => {
   // on the aggregate score, which depends on unrelated rules too.
   const entry = byYear(2007);
   assert.ok(entry.flags.some((f) => f.id === 'direct-decadal-into-year' && f.severity === 'ovlp2'));
-  // 2007 丁亥: 丁 puts 流魁 at 亥 which IS the 流命 — the kuiyue rule fires here too.
-  assert.ok(entry.flags.some((f) => f.id === 'kuiyue-in-flow-life'));
-  assert.equal(entry.score, 1 - 2 + 1); // lu-in-flow-life + direct hit + kuiyue (+0*3 sfsz)
+  // 2007 丁亥: 丁 puts 流魁 at 亥 which IS the 流命 — the kuiyue rule fires (as a note:
+  // calibration demoted it to score-neutral).
+  assert.ok(entry.flags.some((f) => f.id === 'kuiyue-in-flow-life' && f.severity === 'note'));
+  assert.equal(entry.score, 1 - 2); // lu-in-flow-life + direct hit + 0 kuiyue (+0*3 sfsz)
 });
 
 console.log(`\nAll ${passed} overlap-engine test groups passed.`);
