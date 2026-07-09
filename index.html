@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>紫微斗數 疊宮命盤</title>
+  <script type="module" crossorigin src="./assets/index-D4y9OdsU.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/index-BFIWWA0C.css">
+</head>
+<body>
+    <div id="app">
+        <aside id="sidebar">
+            <h1>紫微斗數 疊宮命盤</h1>
+            <form id="chart-form">
+                <label for="birth-date">出生日期(國曆)</label>
+                <input type="date" id="birth-date" required>
+
+                <label for="time-index">時辰</label>
+                <select id="time-index">
+                    <option value="0">早子時(00:00-01:00)</option>
+                    <option value="1">丑時(01:00-03:00)</option>
+                    <option value="2">寅時(03:00-05:00)</option>
+                    <option value="3">卯時(05:00-07:00)</option>
+                    <option value="4">辰時(07:00-09:00)</option>
+                    <option value="5">巳時(09:00-11:00)</option>
+                    <option value="6">午時(11:00-13:00)</option>
+                    <option value="7">未時(13:00-15:00)</option>
+                    <option value="8">申時(15:00-17:00)</option>
+                    <option value="9">酉時(17:00-19:00)</option>
+                    <option value="10">戌時(19:00-21:00)</option>
+                    <option value="11">亥時(21:00-23:00)</option>
+                    <option value="12">晚子時(23:00-00:00)</option>
+                </select>
+
+                <label for="gender">性別</label>
+                <select id="gender">
+                    <option value="男">男</option>
+                    <option value="女">女</option>
+                </select>
+
+                <button type="submit">排盤</button>
+            </form>
+
+            <div class="control-group">
+                <label for="profile-select">命盤存檔</label>
+                <select id="profile-select"><option value="">（選擇已存命盤）</option></select>
+                <div id="profile-row">
+                    <input type="text" id="profile-name" placeholder="名稱" maxlength="20">
+                    <button type="button" id="profile-save">儲存</button>
+                    <button type="button" id="profile-delete">刪除</button>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label for="target-date">目標時間（大限/流年）</label>
+                <input type="datetime-local" id="target-date">
+                <button type="button" id="apply-target">套用</button>
+            </div>
+
+            <div class="control-group">
+                <label>飛化顯示</label>
+                <div id="fly-mode">
+                    <label><input type="radio" name="fly-mode" value="none">無</label>
+                    <label><input type="radio" name="fly-mode" value="select" checked>點選飛化</label>
+                    <label><input type="radio" name="fly-mode" value="heat">匯聚熱力</label>
+                </div>
+                <div id="fly-legend">
+                    <span class="mut mut-lu">祿</span><span class="mut mut-quan">權</span><span class="mut mut-ke">科</span><span class="mut mut-ji">忌</span>
+                    <span class="legend-hint">點宮位看四化飛向・點層中央看該層四化</span>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <label id="adj-toggle-label"><input type="checkbox" id="adj-toggle">顯示雜曜</label>
+            </div>
+
+            <div class="control-group">
+                <button type="button" id="export-report">匯出報告</button>
+            </div>
+
+            <div id="meta"></div>
+            <div id="year-panel"></div>
+            <div id="info-panel"></div>
+        </aside>
+        <main id="main-col">
+            <div id="viewport">
+                <div id="flat-view"></div>
+            </div>
+            <div id="timeline"></div>
+        </main>
+    </div>
+</body>
+</html>
