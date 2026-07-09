@@ -100,6 +100,36 @@ export function renderTimeline(container, timeline, callbacks) {
     currentTlYearsDiv.appendChild(tlYear);
   });
 
+  // Legend: what the score bars and dots mean (users shouldn't have to ask)
+  const legend = document.createElement('div');
+  legend.className = 'tl-legend';
+  const legendItems = [
+    ['tl-score tl-good', '吉年（+1↑）'],
+    ['tl-score tl-mid', '平（0）'],
+    ['tl-score tl-bad1', '微凶（−1）'],
+    ['tl-score tl-bad2', '凶（−2↓）'],
+    ['tl-dot love', '桃花年（紅鸞／天喜坐流命）'],
+    ['tl-dot note', '流命疊大限命'],
+  ];
+  legendItems.forEach(([cls, label]) => {
+    const item = document.createElement('span');
+    item.className = 'tl-legend-item';
+    const swatch = document.createElement('span');
+    swatch.className = `tl-legend-swatch ${cls}`;
+    item.appendChild(swatch);
+    item.appendChild(document.createTextNode(label));
+    legend.appendChild(item);
+  });
+  const chipItem = document.createElement('span');
+  chipItem.className = 'tl-legend-item';
+  const chip = document.createElement('span');
+  chip.className = 'ovlp-chip ovlp2';
+  chip.textContent = '疊';
+  chipItem.appendChild(chip);
+  chipItem.appendChild(document.createTextNode('疊宮事件（盤面標記，懸停看詳情）'));
+  legend.appendChild(chipItem);
+  container.appendChild(legend);
+
   // Attach a single click listener to the scroll container for event delegation
   tlScroll.addEventListener('click', (event) => {
     const targetYearEl = event.target.closest('.tl-year');

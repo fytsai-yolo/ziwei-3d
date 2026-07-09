@@ -635,6 +635,19 @@ form button[type="submit"] {
 .tl-score.tl-bad1 { background: rgba(208, 53, 85, 0.45); }
 .tl-score.tl-mid  { background: rgba(255, 255, 255, 0.12); }
 .tl-score.tl-good { background: #3fbf6f; }
+
+/* Timeline legend: explains the score bars, dots, and 疊 chips */
+.tl-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 14px;
+    margin-top: 5px;
+    font-size: 11px;
+    color: var(--color-text-dim);
+}
+.tl-legend-item { display: inline-flex; align-items: center; gap: 4px; }
+.tl-legend-swatch.tl-score { display: inline-block; width: 16px; height: 6px; border-radius: 2px; }
+.tl-legend-swatch.tl-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; }
 .tl-y {
     font-size: 10px;
     color: var(--color-text-light);
