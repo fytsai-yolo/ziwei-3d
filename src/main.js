@@ -9,6 +9,7 @@ import { renderMergedChart } from './merged-renderer.js';
 import { matchPalaceKnowledge, composeYearText } from './kb-engine.js';
 import { KB_ENTRIES, YEAR_TEMPLATES } from './kb/index.js';
 import { composeFlightReading, composeFinalParagraph } from './fly-reader.js';
+import { loadProfiles, saveProfile, deleteProfile } from './profiles.js';
 
 let scene;
 let chartData = null; // Stores the latest chart data
@@ -82,6 +83,19 @@ function formatDate(dateString) {
 function formatDateTime(dateTimeString) {
     const [datePart, timePart] = dateTimeString.split('T');
     return `${formatDate(datePart)} ${timePart}`;
+}
+
+/** Refills the saved-profiles dropdown, optionally selecting one by name. */
+function refreshProfileSelect(selectedName = '') {
+    const sel = document.getElementById('profile-select');
+    sel.replaceChildren(_createElement('option', [], '（選擇已存命盤）'));
+    sel.firstChild.value = '';
+    loadProfiles(localStorage).forEach(p => {
+        const opt = _createElement('option', [], `${p.name}（${p.solarDate} ${p.gender}）`);
+        opt.value = p.name;
+        if (p.name === selectedName) opt.selected = true;
+        sel.appendChild(opt);
+    });
 }
 
 /** Sets default values for the chart input form. */
@@ -529,6 +543,44 @@ document.addEventListener('DOMContentLoaded', () => {
     // Hovering a 疊宮 chip/flag highlights the event's palaces on the chart
     bindOverlapHover('flat-view');
     bindOverlapHover('year-panel');
+
+    // Saved chart profiles
+    refreshProfileSelect();
+    document.getElementById('profile-select').addEventListener('change', (e) => {
+        const p = loadProfiles(localStorage).find(x => x.name === e.target.value);
+        if (!p) return;
+        document.getElementById('birth-date').value = p.solarDate;
+        document.getElementById('time-index').value = String(p.timeIndex);
+        document.getElementById('gender').value = p.gender;
+        document.getElementById('profile-name').value = p.name;
+        rebuild();
+    });
+    document.getElementById('profile-save').addEventListener('click', () => {
+        const name = document.getElementById('profile-name').value.trim();
+        if (!name) {
+            infoPanel.classList.add('error');
+            infoPanel.textContent = '請先輸入存檔名稱。';
+            return;
+        }
+        try {
+            saveProfile(localStorage, {
+                name,
+                solarDate: document.getElementById('birth-date').value,
+                timeIndex: parseInt(document.getElementById('time-index').value, 10),
+                gender: document.getElementById('gender').value,
+            });
+            refreshProfileSelect(name);
+        } catch (err) {
+            infoPanel.classList.add('error');
+            infoPanel.textContent = `存檔失敗：${err.message}`;
+        }
+    });
+    document.getElementById('profile-delete').addEventListener('click', () => {
+        const sel = document.getElementById('profile-select');
+        if (!sel.value) return;
+        deleteProfile(localStorage, sel.value);
+        refreshProfileSelect();
+    });
 
     // 雜曜 visibility (hidden by default — biggest text-noise contributor)
     document.getElementById('adj-toggle').addEventListener('change', (e) => {

@@ -636,6 +636,11 @@ form button[type="submit"] {
 .tl-score.tl-mid  { background: rgba(255, 255, 255, 0.12); }
 .tl-score.tl-good { background: #3fbf6f; }
 
+/* Saved chart profiles */
+#profile-row { display: flex; gap: 6px; margin-top: 6px; }
+#profile-row input { flex: 1; min-width: 0; }
+#profile-row button { margin-top: 0; flex-shrink: 0; }
+
 /* Timeline legend: explains the score bars, dots, and 疊 chips */
 .tl-legend {
     display: flex;

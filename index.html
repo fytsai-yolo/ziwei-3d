@@ -42,6 +42,16 @@
             </form>
 
             <div class="control-group">
+                <label for="profile-select">命盤存檔</label>
+                <select id="profile-select"><option value="">（選擇已存命盤）</option></select>
+                <div id="profile-row">
+                    <input type="text" id="profile-name" placeholder="名稱" maxlength="20">
+                    <button type="button" id="profile-save">儲存</button>
+                    <button type="button" id="profile-delete">刪除</button>
+                </div>
+            </div>
+
+            <div class="control-group">
                 <label for="target-date">目標時間（大限/流年）</label>
                 <input type="datetime-local" id="target-date">
                 <button type="button" id="apply-target">套用</button>

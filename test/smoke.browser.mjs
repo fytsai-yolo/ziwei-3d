@@ -58,6 +58,17 @@ try {
   // 5. Timeline legend is present (the marks must be self-explanatory)
   check('timeline legend renders', await page.locator('#timeline .tl-legend .tl-legend-item').count() >= 6);
 
+  // 5b. Profile save/load round-trip through the real UI
+  await page.fill('#profile-name', '煙測');
+  await page.click('#profile-save');
+  await page.waitForTimeout(200);
+  const optCount = await page.locator('#profile-select option').count();
+  check('profile saved appears in dropdown', optCount >= 2, `options=${optCount}`);
+  await page.selectOption('#profile-select', '煙測');
+  await page.waitForTimeout(600);
+  check('selecting a profile rebuilds the chart',
+    await page.locator('.merged-chart .palace').count() === 12);
+
   // 6. No console errors during all of the above
   // (collected via listener installed before goto would be ideal; spot-check instead)
   const errors = await page.evaluate(() => window.__errs || []);
